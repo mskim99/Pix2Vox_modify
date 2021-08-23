@@ -1,0 +1,1 @@
+E:\ProgramData\Python37\python runner.py --test --weight=./output/logs/checkpoints/Pix2Vox-A-ShapeNet.pth --gpu 0

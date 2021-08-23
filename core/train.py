@@ -155,10 +155,12 @@ def train_net(cfg):
 
     # Summary writer for TensorBoard
     output_dir = os.path.join(cfg.DIR.OUT_PATH, '%s', dt.now().isoformat())
+    # log_dir = output_dir + '/logs'
     log_dir = output_dir % 'logs'
-    ckpt_dir = output_dir % 'checkpoints'
-    train_writer = SummaryWriter(os.path.join(log_dir, 'train'))
-    val_writer = SummaryWriter(os.path.join(log_dir, 'test'))
+    # ckpt_dir = output_dir + '/checkpoints'
+    ckpt_dir = 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/logs/checkpoints'
+    train_writer = SummaryWriter('I:/Program/Pix2Vox-master/Pix2Vox-master/output/logs/train')
+    val_writer = SummaryWriter('I:/Program/Pix2Vox-master/Pix2Vox-master/output/logs/test')
 
     # Training loop
     for epoch_idx in range(init_epoch, cfg.TRAIN.NUM_EPOCHES):
@@ -268,7 +270,7 @@ def train_net(cfg):
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils.save_checkpoints(cfg, os.path.join(ckpt_dir, 'ckpt-epoch-%04d.pth' % (epoch_idx + 1)),
+            utils.network_utils.save_checkpoints(cfg, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
                                                  refiner, refiner_solver, merger, merger_solver, best_iou, best_epoch)
         if iou > best_iou:
@@ -277,7 +279,7 @@ def train_net(cfg):
 
             best_iou = iou
             best_epoch = epoch_idx + 1
-            utils.network_utils.save_checkpoints(cfg, os.path.join(ckpt_dir, 'best-ckpt.pth'), epoch_idx + 1, encoder,
+            utils.network_utils.save_checkpoints(cfg, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/logs/checkpoints/best-ckpt.pth', epoch_idx + 1, encoder,
                                                  encoder_solver, decoder, decoder_solver, refiner, refiner_solver,
                                                  merger, merger_solver, best_iou, best_epoch)
 

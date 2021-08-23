@@ -10,6 +10,7 @@ import torch.backends.cudnn
 import torch.utils.data
 
 import utils.binvox_visualization
+import utils.binvox_rw
 import utils.data_loaders
 import utils.data_transforms
 import utils.network_utils
@@ -21,6 +22,9 @@ from models.decoder import Decoder
 from models.refiner import Refiner
 from models.merger import Merger
 
+import cv2
+
+from PIL import Image
 
 def test_net(cfg,
              epoch_idx=-1,
@@ -99,6 +103,8 @@ def test_net(cfg,
     refiner.eval()
     merger.eval()
 
+    vol_write_idx = 0
+
     for sample_idx, (taxonomy_id, sample_name, rendering_images, ground_truth_volume) in enumerate(test_data_loader):
         taxonomy_id = taxonomy_id[0] if isinstance(taxonomy_id[0], str) else taxonomy_id[0].item()
         sample_name = sample_name[0]
@@ -128,6 +134,18 @@ def test_net(cfg,
             encoder_losses.update(encoder_loss.item())
             refiner_losses.update(refiner_loss.item())
 
+            # Volume Visualization
+            gv = generated_volume.cpu().numpy()
+            # gvvd = gv.flatten()
+            # gvvd = gv.reshape(32, 32, 32)
+            # gvv = utils.binvox_rw.from_array(gv, [32, 32, 32], [0.0, 0.0, 0.0], 1.0)
+            # with open('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.binvox', 'wb') as file:
+               # utils.binvox_rw.write(volume, file)
+            rendering_views = utils.binvox_visualization.get_volume_views(gv, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/image/test/gv',
+                                                        vol_write_idx)
+            # np.save('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
+            vol_write_idx = vol_write_idx + 1
+
             # IoU per sample
             sample_iou = []
             for th in cfg.TEST.VOXEL_THRESH:
@@ -147,13 +165,17 @@ def test_net(cfg,
                 img_dir = output_dir % 'images'
                 # Volume Visualization
                 gv = generated_volume.cpu().numpy()
-                rendering_views = utils.binvox_visualization.get_volume_views(gv, os.path.join(img_dir, 'test'),
+
+                rendering_views = utils.binvox_visualization.get_volume_views(gv, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/image/test/gv',
                                                                               epoch_idx)
-                test_writer.add_image('Test Sample#%02d/Volume Reconstructed' % sample_idx, rendering_views, epoch_idx)
+                # print(np.shape(rendering_views))
+                # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
+                # test_writer.add_image('Test Sample#%02d/Volume Reconstructed' % sample_idx, rendering_views_im, epoch_idx)
                 gtv = ground_truth_volume.cpu().numpy()
-                rendering_views = utils.binvox_visualization.get_volume_views(gtv, os.path.join(img_dir, 'test'),
+                rendering_views = utils.binvox_visualization.get_volume_views(gtv, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/image/test/gtv',
                                                                               epoch_idx)
-                test_writer.add_image('Test Sample#%02d/Volume GroundTruth' % sample_idx, rendering_views, epoch_idx)
+                # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
+                # test_writer.add_image('Test Sample#%02d/Volume GroundTruth' % sample_idx, rendering_views_im, epoch_idx)
 
             # Print sample loss and IoU
             print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s' %
