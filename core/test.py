@@ -143,10 +143,12 @@ def test_net(cfg,
             # with open('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.binvox', 'wb') as file:
                # utils.binvox_rw.write(volume, file)
 
-            rendering_views = utils.binvox_visualization.get_volume_views(gv, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/image/test/gv',
+            '''
+            rendering_views = utils.binvox_visualization.get_volume_views(gv, '../output/image/test/gv',
                                                         vol_write_idx)
             np.save('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
             vol_write_idx = vol_write_idx + 1
+            '''
 
             # IoU per sample
             sample_iou = []
@@ -168,13 +170,13 @@ def test_net(cfg,
                 # Volume Visualization
                 gv = generated_volume.cpu().numpy()
 
-                rendering_views = utils.binvox_visualization.get_volume_views(gv, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/image/test/gv',
+                rendering_views = utils.binvox_visualization.get_volume_views(gv, '../output/image/test/gv',
                                                                               epoch_idx)
                 # print(np.shape(rendering_views))
                 # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
                 # test_writer.add_image('Test Sample#%02d/Volume Reconstructed' % sample_idx, rendering_views_im, epoch_idx)
                 gtv = ground_truth_volume.cpu().numpy()
-                rendering_views = utils.binvox_visualization.get_volume_views(gtv, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/image/test/gtv',
+                rendering_views = utils.binvox_visualization.get_volume_views(gtv, '../output/image/test/gtv',
                                                                               epoch_idx)
                 # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
                 # test_writer.add_image('Test Sample#%02d/Volume GroundTruth' % sample_idx, rendering_views_im, epoch_idx)
