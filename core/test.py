@@ -135,15 +135,17 @@ def test_net(cfg,
             refiner_losses.update(refiner_loss.item())
 
             # Volume Visualization
+
             gv = generated_volume.cpu().numpy()
             # gvvd = gv.flatten()
             # gvvd = gv.reshape(32, 32, 32)
             # gvv = utils.binvox_rw.from_array(gv, [32, 32, 32], [0.0, 0.0, 0.0], 1.0)
             # with open('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.binvox', 'wb') as file:
                # utils.binvox_rw.write(volume, file)
+
             rendering_views = utils.binvox_visualization.get_volume_views(gv, 'I:/Program/Pix2Vox-master/Pix2Vox-master/output/image/test/gv',
                                                         vol_write_idx)
-            # np.save('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
+            np.save('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
             vol_write_idx = vol_write_idx + 1
 
             # IoU per sample
