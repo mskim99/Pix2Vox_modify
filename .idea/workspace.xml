@@ -95,7 +95,7 @@
   </component>
   <component name="RunManager">
     <configuration name="Python 3.7" type="PythonConfigurationType" factoryName="Python">
-      <output_file path="$PROJECT_DIR$/../log/log_pix2vox" is_save="true" />
+      <output_file path="$PROJECT_DIR$/output/logs/log_pix2vox.txt" is_save="true" />
       <module name="Pix2Vox-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -108,7 +108,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/runner.py" />
-      <option name="PARAMETERS" value="--gpu 0 --epoch 5" />
+      <option name="PARAMETERS" value="--gpu 0 --test --weight=./output/checkpoints/210828_checkpoints_xray_train/ckpt-epoch-0250.pth" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
