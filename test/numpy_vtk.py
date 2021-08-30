@@ -2,8 +2,8 @@ from vtk.util import numpy_support
 import vtk
 import numpy as np
 
-for i in range (0, 7129):
-    x_save_load = np.load('I:/Program/Pix2Vox-master/output_log/210825_gv_epoch_10/gv_' + str(i).zfill(6) + '.npy')
+for i in range (0, 18):
+    x_save_load = np.load('I:/Program/Pix2Vox-master/voxel_log/210829_gv_xray_test_epoch_250/gv_' + str(i).zfill(6) + '.npy')
     imdata = vtk.vtkImageData()
     # this is where the conversion happens
     depthArray = numpy_support.numpy_to_vtk(x_save_load.ravel(), deep=3, array_type=vtk.VTK_FLOAT)
@@ -15,7 +15,7 @@ for i in range (0, 7129):
     imdata.GetPointData().SetScalars(depthArray)
 
     writer = vtk.vtkMetaImageWriter()
-    writer.SetFileName('I:/Program/Pix2Vox-master/output_log/210825_gv_epoch_10_mha/gv_mha_' + str(i).zfill(6) +'.mha')
+    writer.SetFileName('I:/Program/Pix2Vox-master/voxel_log/210829_gv_xray_test_epoch_250_mha/gv_mha_' + str(i).zfill(6) +'.mha')
     writer.SetInputData(imdata)
     writer.Write()
 
