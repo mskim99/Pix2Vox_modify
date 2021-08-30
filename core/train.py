@@ -158,9 +158,9 @@ def train_net(cfg):
     # log_dir = output_dir + '/logs'
     log_dir = output_dir % 'logs'
     # ckpt_dir = output_dir + '/checkpoints'
-    ckpt_dir = '../output/logs/checkpoints'
-    train_writer = SummaryWriter('../output/logs/train')
-    val_writer = SummaryWriter('../output/logs/test')
+    ckpt_dir = './output/logs/checkpoints'
+    train_writer = SummaryWriter('./output/logs/train')
+    val_writer = SummaryWriter('./output/logs/test')
 
     # Training loop
     for epoch_idx in range(init_epoch, cfg.TRAIN.NUM_EPOCHES):
@@ -270,7 +270,7 @@ def train_net(cfg):
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils.save_checkpoints(cfg, '../output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+            utils.network_utils.save_checkpoints(cfg, './output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
                                                  refiner, refiner_solver, merger, merger_solver, best_iou, best_epoch)
         if iou > best_iou:
@@ -279,7 +279,7 @@ def train_net(cfg):
 
             best_iou = iou
             best_epoch = epoch_idx + 1
-            utils.network_utils.save_checkpoints(cfg, '../output/logs/checkpoints/best-ckpt.pth', epoch_idx + 1, encoder,
+            utils.network_utils.save_checkpoints(cfg, './output/logs/checkpoints/best-ckpt.pth', epoch_idx + 1, encoder,
                                                  encoder_solver, decoder, decoder_solver, refiner, refiner_solver,
                                                  merger, merger_solver, best_iou, best_epoch)
 
