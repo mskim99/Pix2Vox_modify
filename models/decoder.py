@@ -53,26 +53,26 @@ class Decoder(torch.nn.Module):
             # For 32 resolution
             '''
             gen_volume = features.view(-1, 2048, 2, 2, 2)
-            # print(gen_volume.size())   # torch.Size([batch_size, 2048, 2, 2, 2])
+            print(gen_volume.size())   # torch.Size([batch_size, 2048, 2, 2, 2])
             gen_volume = self.layer1(gen_volume)
-            # print(gen_volume.size())   # torch.Size([batch_size, 512, 4, 4, 4])
+            print(gen_volume.size())   # torch.Size([batch_size, 512, 4, 4, 4])
             gen_volume = self.layer2(gen_volume)
-            # print(gen_volume.size())   # torch.Size([batch_size, 128, 8, 8, 8])
+            print(gen_volume.size())   # torch.Size([batch_size, 128, 8, 8, 8])
             gen_volume = self.layer3(gen_volume)
-            # print(gen_volume.size())   # torch.Size([batch_size, 32, 16, 16, 16])
+            print(gen_volume.size())   # torch.Size([batch_size, 32, 16, 16, 16])
             gen_volume = self.layer4(gen_volume)
             raw_feature = gen_volume
-            # print(gen_volume.size())   # torch.Size([batch_size, 8, 32, 32, 32])
+            print(gen_volume.size())   # torch.Size([batch_size, 8, 32, 32, 32])
             gen_volume = self.layer5(gen_volume)
-            # print(gen_volume.size())   # torch.Size([batch_size, 1, 32, 32, 32])
+            print(gen_volume.size())   # torch.Size([batch_size, 1, 32, 32, 32])
             raw_feature = torch.cat((raw_feature, gen_volume), dim=1)
-            # print(raw_feature.size())  # torch.Size([batch_size, 9, 32, 32, 32])
+            print(raw_feature.size())  # torch.Size([batch_size, 9, 32, 32, 32])
             '''
 
             # For 64 resolution
-            gen_volume = features.view(-1, 16384, 2, 2, 2)
+            gen_volume = features.view(-1, 2048, 4, 4, 4)
             # print(gen_volume.size())   # torch.Size([batch_size, 16384, 2, 2, 2])
-            gen_volume = self.layer0(gen_volume)
+            # gen_volume = self.layer0(gen_volume)
             # print(gen_volume.size())   # torch.Size([batch_size, 2048, 4, 4, 4])
             gen_volume = self.layer1(gen_volume)
             # print(gen_volume.size())   # torch.Size([batch_size, 512, 8, 8, 8])
@@ -93,6 +93,6 @@ class Decoder(torch.nn.Module):
 
         gen_volumes = torch.stack(gen_volumes).permute(1, 0, 2, 3, 4).contiguous()
         raw_features = torch.stack(raw_features).permute(1, 0, 2, 3, 4, 5).contiguous()
-        # print(gen_volumes.size())      # torch.Size([batch_size, n_views, 32, 32, 32])
-        # print(raw_features.size())     # torch.Size([batch_size, n_views, 9, 32, 32, 32])
+        # print(gen_volumes.size())      # torch.Size([batch_size, n_views, 64, 64, 64])
+        # print(raw_features.size())     # torch.Size([batch_size, n_views, 9, 64, 64, 64])
         return raw_features, gen_volumes

@@ -75,7 +75,7 @@ class Refiner(torch.nn.Module):
         # print(volumes_16_l.size())        # torch.Size([batch_size, 64, 16, 16, 16])
         volumes_8_l = self.layer_encoder3(volumes_16_l)
         # print(volumes_8_l.size())        # torch.Size([batch_size, 128, 8, 8, 8])
-        volumes_4_l = self.layer_encoder3(volumes_8_l)
+        volumes_4_l = self.layer_encoder4(volumes_8_l)
         # print(volumes_4_l.size())        # torch.Size([batch_size, 256, 4, 4, 4])
         flatten_features = self.layer_fc1(volumes_4_l.view(-1, 16384))
         # print(flatten_features.size())   # torch.Size([batch_size, 2048])
@@ -89,10 +89,10 @@ class Refiner(torch.nn.Module):
         # print(volumes_16_r.size())       # torch.Size([batch_size, 64, 16, 16, 16])
         volumes_32_r = (volumes_32_l + self.layer_decoder2(volumes_16_r))
         # print(volumes_32_r.size())       # torch.Size([batch_size, 32, 32, 32, 32])
-        volumes_64_r = (volumes_64_l + self.layer_decoder4(volumes_32_r))
+        volumes_64_r = (volumes_64_l + self.layer_decoder3(volumes_32_r)) * 0.5
         # print(volumes_64_r.size())       # torch.Size([batch_size, 1, 64, 64, 64])
 
-        return volumes_32_r.view((-1, 64, 64, 64))
+        return volumes_64_r.view((-1, 64, 64, 64))
 
         # For 32 resolution
         '''
