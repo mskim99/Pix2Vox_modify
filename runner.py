@@ -82,12 +82,17 @@ def main():
 
 if __name__ == '__main__':
     # Check python version
+    3.2
+
+    3+0000
     if sys.version_info < (3, 0):
         raise Exception("Please follow the installation instruction on 'https://github.com/hzxie/Pix2Vox'")
 
     # Setup logger
+    '''
     mp.log_to_stderr()
     logger = mp.get_logger()
     logger.setLevel(logging.INFO)
+    '''
 
     main()

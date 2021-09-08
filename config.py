@@ -23,11 +23,11 @@ __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/Shapenet/ShapeNetVox32
 '''
 
 # ShapeNet Modified
-__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI.json'
+__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI_spin_23_24.json'
 # __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH  = './datasets/PascalShapeNet.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_xray/KISTI_Rendering/%s/%s/rendering/%02d.png'
+__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KIST_xray_23_24_spine/KISTI_Rendering/%s/%s/rendering/%02d.png'
 # __C.DATASETS.SHAPENET.RENDERING_PATH      = '/home/hzxie/Datasets/ShapeNet/PascalShapeNetRendering/%s/%s/render_%04d.jpg'
-__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_xray/KISTI_Vox32/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KIST_xray_23_24_spine/KISTI_Vox64/%s/%s/model.binvox'
 
 __C.DATASETS.PASCAL3D                       = edict()
 __C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'
@@ -69,7 +69,7 @@ __C.CONST.CROP_IMG_H                        = 128       # Dummy property for Pas
 # Directories
 #
 __C.DIR                                     = edict()
-__C.DIR.OUT_PATH                            = './output'
+__C.DIR.OUT_PATH                            = 'D:/output'
 __C.DIR.RANDOM_BG_PATH                      = '/home/hzxie/Datasets/SUN2012/JPEGImages'
 
 #
