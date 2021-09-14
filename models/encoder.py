@@ -14,11 +14,13 @@ class Encoder(torch.nn.Module):
         super(Encoder, self).__init__()
         self.cfg = cfg
 
-        # Layer Definition
+        # Layer Definition & only use in 2D image processing
+        '''
         vgg16_bn = torchvision.models.vgg16_bn(pretrained=True)
         self.vgg = torch.nn.Sequential(*list(vgg16_bn.features.children()))[:27]
+        '''
 
-        # For resolution 32
+        # For resolution 32 / X-ray
         '''
         self.layer1 = torch.nn.Sequential(
             torch.nn.Conv2d(512, 512, kernel_size=3),
@@ -38,7 +40,8 @@ class Encoder(torch.nn.Module):
         )
         '''
 
-        # For resolution 64
+        # For resolution 64 / X-ray
+        '''
         self.layer1 = torch.nn.Sequential(
             torch.nn.Conv2d(512, 512, kernel_size=5),
             torch.nn.BatchNorm2d(512),
@@ -54,10 +57,74 @@ class Encoder(torch.nn.Module):
             torch.nn.BatchNorm2d(512),
             torch.nn.ELU()
         )
+        '''
 
-        # Don't update params in VGG16
+        # resolution 32 / Volume
+        self.layer1 = torch.nn.Sequential(
+            torch.nn.Conv3d(64, 64, kernel_size=3),
+            torch.nn.BatchNorm3d(64),
+            torch.nn.ELU(),
+        )
+        self.layer2 = torch.nn.Sequential(
+            torch.nn.Conv3d(64, 64, kernel_size=3),
+            torch.nn.BatchNorm3d(64),
+            torch.nn.ELU(),
+        )
+        self.layer3 = torch.nn.Sequential(
+            torch.nn.Conv3d(64, 128, kernel_size=3),
+            torch.nn.BatchNorm3d(128),
+            torch.nn.ELU(),
+            torch.nn.MaxPool3d(kernel_size=2),
+        )
+        self.layer4 = torch.nn.Sequential(
+            torch.nn.Conv3d(128, 128, kernel_size=3),
+            torch.nn.BatchNorm3d(128),
+            torch.nn.ELU(),
+        )
+        self.layer5 = torch.nn.Sequential(
+            torch.nn.Conv3d(128, 256, kernel_size=3),
+            torch.nn.BatchNorm3d(256),
+            torch.nn.ELU(),
+            torch.nn.MaxPool3d(kernel_size=2),
+        )
+        self.layer6 = torch.nn.Sequential(
+            torch.nn.Conv3d(256, 256, kernel_size=3),
+            torch.nn.BatchNorm3d(256),
+            torch.nn.ELU(),
+        )
+        self.layer7 = torch.nn.Sequential(
+            torch.nn.Conv3d(256, 256, kernel_size=3),
+            torch.nn.BatchNorm3d(256),
+            torch.nn.ELU(),
+        )
+        self.layer8 = torch.nn.Sequential(
+            torch.nn.Conv3d(256, 512, kernel_size=3),
+            torch.nn.BatchNorm3d(256),
+            torch.nn.ELU(),
+            torch.nn.MaxPool3d(kernel_size=2),
+        )
+        self.layer9 = torch.nn.Sequential(
+            torch.nn.Conv3d(512, 512, kernel_size=3),
+            torch.nn.BatchNorm3d(512),
+            torch.nn.ELU(),
+        )
+        self.layer10 = torch.nn.Sequential(
+            torch.nn.Conv3d(512, 512, kernel_size=3),
+            torch.nn.BatchNorm3d(512),
+            torch.nn.ELU(),
+        )
+        self.layer11 = torch.nn.Sequential(
+            torch.nn.Conv3d(512, 256, kernel_size=1),
+            torch.nn.BatchNorm3d(256),
+            torch.nn.ELU(),
+            torch.nn.MaxPool3d(kernel_size=3),
+        )
+
+        # Don't update params in VGG16 & only use in 2D image processing
+        '''
         for param in vgg16_bn.parameters():
             param.requires_grad = False
+            '''
 
     def forward(self, rendering_images):
         # print(rendering_images.size())  # torch.Size([batch_size, n_views, img_c, img_h, img_w])
@@ -67,7 +134,7 @@ class Encoder(torch.nn.Module):
 
         for img in rendering_images:
 
-            # For 32 resolution
+            # For 32 resolution / X-ray
             '''
             features = self.vgg(img.squeeze(dim=0))
             print(features.size())    # torch.Size([batch_size, 512, 28, 28])
@@ -79,7 +146,8 @@ class Encoder(torch.nn.Module):
             print(features.size())    # torch.Size([batch_size, 256, 8, 8])
             '''
 
-            # For 64 resolution
+            # For 64 resolution / X-ray
+            '''
             features = self.vgg(img.squeeze(dim=0))
             # print(features.size())  # torch.Size([batch_size, 512, 28, 28])
             features = self.layer1(features)
@@ -88,6 +156,31 @@ class Encoder(torch.nn.Module):
             # print(features.size())  # torch.Size([batch_size, 512, 20, 20])
             features = self.layer3(features)
             # print(features.size())  # torch.Size([batch_size, 512, 16, 16])
+            '''
+
+            # For 32 resolution / Volume
+            features = self.layer1(img.squeeze(dim=0))
+            # print(features.size())
+            features = self.layer2(features)
+            # print(features.size())
+            features = self.layer3(features)
+            # print(features.size())
+            features = self.layer4(features)
+            # print(features.size())
+            features = self.layer5(features)
+            # print(features.size())
+            features = self.layer6(features)
+            # print(features.size())
+            features = self.layer7(features)
+            # print(features.size())
+            features = self.layer8(features)
+            # print(features.size())
+            features = self.layer9(features)
+            # print(features.size())  # torch.Size([batch_size, 512, 26, 26])
+            features = self.layer10(features)
+            # print(features.size())  # torch.Size([batch_size, 512, 8, 8])
+            features = self.layer11(features)
+            # print(features.size())  # torch.Size([batch_size, 256, 8, 8])
 
             image_features.append(features)
 

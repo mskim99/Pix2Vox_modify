@@ -29,27 +29,31 @@ class Refiner(torch.nn.Module):
             torch.nn.LeakyReLU(cfg.NETWORK.LEAKY_VALUE),
             torch.nn.MaxPool3d(kernel_size=2)
         )
+        '''
         self.layer_encoder4 = torch.nn.Sequential(
             torch.nn.Conv3d(128, 256, kernel_size=4, padding=2),
             torch.nn.BatchNorm3d(256),
             torch.nn.LeakyReLU(cfg.NETWORK.LEAKY_VALUE),
             torch.nn.MaxPool3d(kernel_size=2)
         )
+        '''
         self.layer_fc1 = torch.nn.Sequential(
-            # torch.nn.Linear(8192, 2048),
-            torch.nn.Linear(16384, 2048),
+            torch.nn.Linear(8192, 2048), # 32 res
+            # torch.nn.Linear(16384, 2048), # 64 res
             torch.nn.ReLU()
         )
         self.layer_fc2 = torch.nn.Sequential(
-            # torch.nn.Linear(2048, 8192),
-            torch.nn.Linear(2048, 16384),
+            torch.nn.Linear(2048, 8192), # 32 res
+            # torch.nn.Linear(2048, 16384), # 64 res
             torch.nn.ReLU()
         )
+        '''
         self.layer_decoder0 = torch.nn.Sequential(
             torch.nn.ConvTranspose3d(256, 128, kernel_size=4, stride=2, bias=cfg.NETWORK.TCONV_USE_BIAS, padding=1),
             torch.nn.BatchNorm3d(128),
             torch.nn.ReLU()
         )
+        '''
         self.layer_decoder1 = torch.nn.Sequential(
             torch.nn.ConvTranspose3d(128, 64, kernel_size=4, stride=2, bias=cfg.NETWORK.TCONV_USE_BIAS, padding=1),
             torch.nn.BatchNorm3d(64),
@@ -67,6 +71,8 @@ class Refiner(torch.nn.Module):
 
     def forward(self, coarse_volumes):
 
+        # For 64 resolution
+        '''
         volumes_64_l = coarse_volumes.view((-1, 1, 64, 64, 64))
         # print(volumes_64_l.size())       # torch.Size([batch_size, 1, 64, 64, 64])
         volumes_32_l = self.layer_encoder1(volumes_64_l)
@@ -93,9 +99,9 @@ class Refiner(torch.nn.Module):
         # print(volumes_64_r.size())       # torch.Size([batch_size, 1, 64, 64, 64])
 
         return volumes_64_r.view((-1, 64, 64, 64))
+        '''
 
         # For 32 resolution
-        '''
         volumes_32_l = coarse_volumes.view((-1, 1, 32, 32, 32))
         # print(volumes_32_l.size())       # torch.Size([batch_size, 1, 32, 32, 32])
         volumes_16_l = self.layer_encoder1(volumes_32_l)
@@ -119,4 +125,3 @@ class Refiner(torch.nn.Module):
         
 
         return volumes_32_r.view((-1, 32, 32, 32))
-        '''

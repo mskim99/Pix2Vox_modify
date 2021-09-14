@@ -11,12 +11,15 @@ class Decoder(torch.nn.Module):
         self.cfg = cfg
 
         # Layer Definition
-        # Layer 0 : For 64 resolution
+        # For resolution 64 : Include layer 0
+        # For resolution 32 : Exclude layer 0
+        '''
         self.layer0 = torch.nn.Sequential(
             torch.nn.ConvTranspose3d(16384, 2048, kernel_size=4, stride=2, bias=cfg.NETWORK.TCONV_USE_BIAS, padding=1),
             torch.nn.BatchNorm3d(2048),
             torch.nn.ReLU()
         )
+        '''
         self.layer1 = torch.nn.Sequential(
             torch.nn.ConvTranspose3d(2048, 512, kernel_size=4, stride=2, bias=cfg.NETWORK.TCONV_USE_BIAS, padding=1),
             torch.nn.BatchNorm3d(512),
@@ -51,7 +54,6 @@ class Decoder(torch.nn.Module):
         for features in image_features:
 
             # For 32 resolution
-            '''
             gen_volume = features.view(-1, 2048, 2, 2, 2)
             print(gen_volume.size())   # torch.Size([batch_size, 2048, 2, 2, 2])
             gen_volume = self.layer1(gen_volume)
@@ -67,9 +69,9 @@ class Decoder(torch.nn.Module):
             print(gen_volume.size())   # torch.Size([batch_size, 1, 32, 32, 32])
             raw_feature = torch.cat((raw_feature, gen_volume), dim=1)
             print(raw_feature.size())  # torch.Size([batch_size, 9, 32, 32, 32])
-            '''
 
             # For 64 resolution
+            '''
             gen_volume = features.view(-1, 2048, 4, 4, 4)
             # print(gen_volume.size())   # torch.Size([batch_size, 16384, 2, 2, 2])
             # gen_volume = self.layer0(gen_volume)
@@ -87,6 +89,7 @@ class Decoder(torch.nn.Module):
             # print(gen_volume.size())   # torch.Size([batch_size, 1, 64, 64, 64])
             raw_feature = torch.cat((raw_feature, gen_volume), dim=1)
             # print(raw_feature.size())  # torch.Size([batch_size, 9, 64, 64, 64])
+            '''
 
             gen_volumes.append(torch.squeeze(gen_volume, dim=1))
             raw_features.append(raw_feature)
