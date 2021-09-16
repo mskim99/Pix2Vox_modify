@@ -175,11 +175,14 @@ def train_net(cfg):
         refiner_losses = utils.network_utils.AverageMeter()
 
         # switch models to training mode
+        print('[DEBUG]  Training...')
         encoder.train()
         decoder.train()
         merger.train()
         refiner.train()
+        print('[DEBUG]  END Training')
 
+        print('[DEBUG]  Start Measurement...')
         batch_end_time = time()
         n_batches = len(train_data_loader)
         for batch_idx, (taxonomy_names, sample_names, rendering_images,

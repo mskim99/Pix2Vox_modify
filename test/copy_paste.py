@@ -76,6 +76,7 @@ for i in range(1, 58):
     '''
 
 # Check File Existance
+'''
 for i in range(1, 58):
     path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/f_' + str(i).zfill(7) + '/rendering/*'
     files = glob.glob(path)
@@ -85,6 +86,38 @@ for i in range(1, 58):
     path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/*'
     files = glob.glob(path)
     print('Male ' + str(i) + '  : ' + str(files.__len__()))
+    '''
+
+# Store img number labeled by 'a', 'c', 's'
+for i in range(1, 58):
+    f = open('I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/f_' + str(i).zfill(7) + '/rendering/views.txt', 'w')
+
+    path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/f_' + str(i).zfill(7) + '/rendering/a*'
+    files = glob.glob(path)
+    f.write(str(files.__len__()) + ' ')
+
+    path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/f_' + str(i).zfill(7) + '/rendering/c*'
+    files = glob.glob(path)
+    f.write(str(files.__len__()) + ' ')
+
+    path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/f_' + str(i).zfill(7) + '/rendering/s*'
+    files = glob.glob(path)
+    f.write(str(files.__len__()) + ' ')
+
+for i in range(1, 58):
+    f = open('I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/views.txt', 'w')
+
+    path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/a*'
+    files = glob.glob(path)
+    f.write(str(files.__len__()) + ' ')
+
+    path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/c*'
+    files = glob.glob(path)
+    f.write(str(files.__len__()) + ' ')
+
+    path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/s*'
+    files = glob.glob(path)
+    f.write(str(files.__len__()) + ' ')
 
 ############################################################################################################################################
 # X-ray Image Processing

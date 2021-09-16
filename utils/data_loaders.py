@@ -65,15 +65,18 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
         else:
             selected_rendering_image_paths = [rendering_image_paths[i] for i in range(self.n_views_rendering)]
 
-        rendering_images = []
-        for image_path in selected_rendering_image_paths:
-            rendering_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
-            if len(rendering_image.shape) < 3:
-                print('[FATAL] %s It seems that there is something wrong with the image file %s' %
-                      (dt.now(), image_path))
-                sys.exit(2)
+        ct_volume_slices = []
+        for image_paths in selected_rendering_image_paths: # 3D > 2D
+            rendering_images = []
+            for image_path in image_paths:
+                rendering_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
+                if len(rendering_image.shape) < 3:
+                    print('[FATAL] %s It seems that there is something wrong with the image file %s' %
+                          (dt.now(), image_path))
+                    sys.exit(2)
 
-            rendering_images.append(rendering_image)
+                rendering_images.append(rendering_image)
+            ct_volume_slices.append(rendering_images)
 
         # Get data of volume
         _, suffix = os.path.splitext(volume_path)
@@ -86,7 +89,7 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
                 volume = utils.binvox_rw.read_as_3d_array(f)
                 volume = volume.data.astype(np.float32)
 
-        return taxonomy_name, sample_name, np.asarray(rendering_images), volume
+        return taxonomy_name, sample_name, np.asarray(ct_volume_slices), volume
 
 
 # //////////////////////////////// = End of ShapeNetDataset Class Definition = ///////////////////////////////// #
@@ -96,6 +99,7 @@ class ShapeNetDataLoader:
     def __init__(self, cfg):
         self.dataset_taxonomy = None
         self.rendering_image_path_template = cfg.DATASETS.SHAPENET.RENDERING_PATH
+        self.rendering_view_template = cfg.DATASETS.SHAPENET.RENDERING_VIEWS
         self.volume_path_template = cfg.DATASETS.SHAPENET.VOXEL_PATH
 
         # Load all taxonomies of the dataset
@@ -125,6 +129,7 @@ class ShapeNetDataLoader:
 
     def get_files_of_taxonomy(self, taxonomy_folder_name, samples):
         files_of_taxonomy = []
+        prefix = ['a', 'c', 's']
 
         for sample_idx, sample_name in enumerate(samples):
             # Get file path of volumes
@@ -134,29 +139,40 @@ class ShapeNetDataLoader:
                       (dt.now(), taxonomy_folder_name, sample_name))
                 continue
 
+            # Get view number of rendering images (prefix)
+            prefix_view_file_path = self.rendering_view_template % (taxonomy_folder_name, sample_name)
+            f = open(prefix_view_file_path, 'r')
+            view_nums = list(map(int, f.readline().split()))
+            # print('View Numbers : ' + str(view_nums))
+
             # Get file list of rendering images
-            img_file_path = self.rendering_image_path_template % (taxonomy_folder_name, sample_name, 0)
-            img_folder = os.path.dirname(img_file_path)
-            total_views = len(os.listdir(img_folder))
-            rendering_image_indexes = range(total_views)
-            rendering_images_file_path = []
-            for image_idx in rendering_image_indexes:
-                img_file_path = self.rendering_image_path_template % (taxonomy_folder_name, sample_name, image_idx)
-                if not os.path.exists(img_file_path):
+            ct_volume_file_path = []
+            for p_idx, p in enumerate(prefix):
+                img_file_path = self.rendering_image_path_template % (taxonomy_folder_name, sample_name, p, 0)
+                # img_folder = os.path.dirname(img_file_path)
+
+                total_views = view_nums[p_idx]
+                rendering_image_indexes = range(total_views)
+                rendering_images_file_path = []
+                for image_idx in rendering_image_indexes:
+                    img_file_path = self.rendering_image_path_template % (taxonomy_folder_name, sample_name, p, image_idx)
+                    if not os.path.exists(img_file_path):
+                        continue
+
+                    rendering_images_file_path.append(img_file_path)
+
+                if len(rendering_images_file_path) == 0:
+                    print('[WARN] %s Ignore sample %s/%s since image files not exists.' %
+                          (dt.now(), taxonomy_folder_name, sample_name))
                     continue
 
-                rendering_images_file_path.append(img_file_path)
-
-            if len(rendering_images_file_path) == 0:
-                print('[WARN] %s Ignore sample %s/%s since image files not exists.' %
-                      (dt.now(), taxonomy_folder_name, sample_name))
-                continue
+                ct_volume_file_path.append(rendering_images_file_path)
 
             # Append to the list of rendering images
             files_of_taxonomy.append({
                 'taxonomy_name': taxonomy_folder_name,
                 'sample_name': sample_name,
-                'rendering_images': rendering_images_file_path,
+                'rendering_images': ct_volume_file_path,
                 'volume': volume_file_path,
             })
 

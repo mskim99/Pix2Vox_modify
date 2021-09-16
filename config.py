@@ -23,11 +23,12 @@ __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/Shapenet/ShapeNetVox32
 '''
 
 # ShapeNet Modified
-__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI_spin_23_24.json'
+__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI.json'
 # __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH  = './datasets/PascalShapeNet.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KIST_xray_23_24_spine/KISTI_Rendering/%s/%s/rendering/%02d.png'
+__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_volume/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
+__C.DATASETS.SHAPENET.RENDERING_VIEWS        = './datasets/KISTI_volume/KISTI_Rendering/%s/%s/rendering/views.txt'
 # __C.DATASETS.SHAPENET.RENDERING_PATH      = '/home/hzxie/Datasets/ShapeNet/PascalShapeNetRendering/%s/%s/render_%04d.jpg'
-__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KIST_xray_23_24_spine/KISTI_Vox64/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume/KISTI_Vox32/%s/%s/model.binvox'
 
 __C.DATASETS.PASCAL3D                       = edict()
 __C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'

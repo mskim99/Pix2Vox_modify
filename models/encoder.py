@@ -176,11 +176,11 @@ class Encoder(torch.nn.Module):
             features = self.layer8(features)
             # print(features.size())
             features = self.layer9(features)
-            # print(features.size())  # torch.Size([batch_size, 512, 26, 26])
+            # print(features.size())  # torch.Size([batch_size, 512, 26, 26, 26])
             features = self.layer10(features)
-            # print(features.size())  # torch.Size([batch_size, 512, 8, 8])
+            # print(features.size())  # torch.Size([batch_size, 512, 8, 8, 8])
             features = self.layer11(features)
-            # print(features.size())  # torch.Size([batch_size, 256, 8, 8])
+            # print(features.size())  # torch.Size([batch_size, 256, 8, 8, 8])
 
             image_features.append(features)
 
