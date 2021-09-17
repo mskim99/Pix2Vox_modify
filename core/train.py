@@ -159,7 +159,7 @@ def train_net(cfg):
     # log_dir = output_dir + '/logs'
     log_dir = output_dir % 'logs'
     # ckpt_dir = output_dir + '/checkpoints'
-    ckpt_dir = 'D:/Output/logs/checkpoints'
+    ckpt_dir = './Output/logs/checkpoints'
     train_writer = SummaryWriter('./output/logs/train')
     val_writer = SummaryWriter('./output/logs/test')
 
@@ -175,14 +175,14 @@ def train_net(cfg):
         refiner_losses = utils.network_utils.AverageMeter()
 
         # switch models to training mode
-        print('[DEBUG]  Training...')
+        # print('[DEBUG]  Training...')
         encoder.train()
         decoder.train()
         merger.train()
         refiner.train()
-        print('[DEBUG]  END Training')
+        # print('[DEBUG]  END Training')
 
-        print('[DEBUG]  Start Measurement...')
+        # print('[DEBUG]  Start Measurement...')
         batch_end_time = time()
         n_batches = len(train_data_loader)
         for batch_idx, (taxonomy_names, sample_names, rendering_images,
@@ -270,17 +270,17 @@ def train_net(cfg):
                   (dt.now(), epoch_idx + 2, cfg.TRAIN.NUM_EPOCHES, n_views_rendering))
 
         # Validate the training models
-        # iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger)
+        iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger)
 
         # Save weights to file
         if (epoch_idx + 1) % cfg.TRAIN.SAVE_FREQ == 0:
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils.save_checkpoints(cfg, 'D:/Output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+            utils.network_utils.save_checkpoints(cfg, './output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
                                                  refiner, refiner_solver, merger, merger_solver, best_iou, best_epoch)
-        '''
+
         if iou > best_iou:
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
@@ -290,7 +290,6 @@ def train_net(cfg):
             utils.network_utils.save_checkpoints(cfg, './output/logs/checkpoints/best-ckpt.pth', epoch_idx + 1, encoder,
                                                  encoder_solver, decoder, decoder_solver, refiner, refiner_solver,
                                                  merger, merger_solver, best_iou, best_epoch)
-                                                 '''
 
     # Close SummaryWriter for TensorBoard
     train_writer.close()

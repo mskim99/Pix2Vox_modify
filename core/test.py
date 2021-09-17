@@ -155,9 +155,7 @@ def test_net(cfg,
             for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(generated_volume, th).float()
                 intersection = torch.sum(_volume.mul(ground_truth_volume)).float()
-                print('intersection : ' + intersection)
                 union = torch.sum(torch.ge(_volume.add(ground_truth_volume), 1)).float()
-                print('union : ' + intersection)
                 sample_iou.append((intersection / union).item())
 
             # IoU per taxonomy

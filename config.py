@@ -58,10 +58,10 @@ __C.DATASET.TEST_DATASET                    = 'ShapeNet'
 __C.CONST                                   = edict()
 __C.CONST.DEVICE                            = '0'
 __C.CONST.RNG_SEED                          = 0
-__C.CONST.IMG_W                             = 224       # Image width for input
-__C.CONST.IMG_H                             = 224       # Image height for input
+__C.CONST.IMG_W                             = 112       # Image width for input
+__C.CONST.IMG_H                             = 112       # Image height for input
 __C.CONST.N_VOX                             = 32
-__C.CONST.BATCH_SIZE                        = 64
+__C.CONST.BATCH_SIZE                        = 1
 __C.CONST.N_VIEWS_RENDERING                 = 1         # Dummy property for Pascal 3D
 __C.CONST.CROP_IMG_W                        = 128       # Dummy property for Pascal 3D
 __C.CONST.CROP_IMG_H                        = 128       # Dummy property for Pascal 3D
@@ -108,7 +108,7 @@ __C.TRAIN.MERGER_LR_MILESTONES              = [150]
 __C.TRAIN.BETAS                             = (.9, .999)
 __C.TRAIN.MOMENTUM                          = .9
 __C.TRAIN.GAMMA                             = .5
-__C.TRAIN.SAVE_FREQ                         = 10            # weights will be overwritten every save_freq epoch
+__C.TRAIN.SAVE_FREQ                         = 50            # weights will be overwritten every save_freq epoch
 __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
 
 #
