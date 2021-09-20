@@ -79,7 +79,7 @@ __C.DIR.RANDOM_BG_PATH                      = '/home/hzxie/Datasets/SUN2012/JPEG
 __C.NETWORK                                 = edict()
 __C.NETWORK.LEAKY_VALUE                     = .2
 __C.NETWORK.TCONV_USE_BIAS                  = False
-__C.NETWORK.USE_REFINER                     = True
+__C.NETWORK.USE_REFINER                     = False
 __C.NETWORK.USE_MERGER                      = True
 
 #
@@ -87,7 +87,7 @@ __C.NETWORK.USE_MERGER                      = True
 #
 __C.TRAIN                                   = edict()
 __C.TRAIN.RESUME_TRAIN                      = False
-__C.TRAIN.NUM_WORKER                        = 4             # number of data workers
+__C.TRAIN.NUM_WORKER                        = 8             # number of data workers
 __C.TRAIN.NUM_EPOCHES                       = 250
 __C.TRAIN.BRIGHTNESS                        = .4
 __C.TRAIN.CONTRAST                          = .4

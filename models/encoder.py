@@ -62,31 +62,47 @@ class Encoder(torch.nn.Module):
 
         # resolution 32 / Volume
         self.layer1 = torch.nn.Sequential(
-            torch.nn.Conv3d(3, 8, kernel_size=3),
-            torch.nn.BatchNorm3d(8),
-            torch.nn.ELU(),
-        )
-        self.layer2 = torch.nn.Sequential(
-            torch.nn.Conv3d(8, 16, kernel_size=3),
-            torch.nn.BatchNorm3d(16),
-            torch.nn.ELU(),
-            torch.nn.MaxPool3d(kernel_size=2),
-        )
-        self.layer3 = torch.nn.Sequential(
-            torch.nn.Conv3d(16, 32, kernel_size=5),
+            torch.nn.Conv3d(3, 32, kernel_size=3),
             torch.nn.BatchNorm3d(32),
             torch.nn.ELU(),
         )
-        self.layer4 = torch.nn.Sequential(
+        self.layer2 = torch.nn.Sequential(
             torch.nn.Conv3d(32, 64, kernel_size=3),
             torch.nn.BatchNorm3d(64),
             torch.nn.ELU(),
         )
-        self.layer5 = torch.nn.Sequential(
-            torch.nn.Conv3d(64, 128, kernel_size=1),
+        self.layer3 = torch.nn.Sequential(
+            torch.nn.Conv3d(64, 128, kernel_size=3),
             torch.nn.BatchNorm3d(128),
             torch.nn.ELU(),
-            torch.nn.MaxPool3d(kernel_size=3),
+        )
+        self.layer4 = torch.nn.Sequential(
+            torch.nn.Conv3d(128, 256, kernel_size=3),
+            torch.nn.BatchNorm3d(256),
+            torch.nn.ELU(),
+            torch.nn.MaxPool3d(kernel_size=2),
+        )
+        self.layer5 = torch.nn.Sequential(
+            torch.nn.Conv3d(256, 256, kernel_size=3),
+            torch.nn.BatchNorm3d(256),
+            torch.nn.ELU(),
+        )
+        self.layer6 = torch.nn.Sequential(
+            torch.nn.Conv3d(256, 512, kernel_size=3),
+            torch.nn.BatchNorm3d(512),
+            torch.nn.ELU(),
+            torch.nn.MaxPool3d(kernel_size=2),
+        )
+        self.layer7 = torch.nn.Sequential(
+            torch.nn.Conv3d(512, 256, kernel_size=5),
+            torch.nn.BatchNorm3d(256),
+            torch.nn.ELU(),
+        )
+        self.layer8 = torch.nn.Sequential(
+            torch.nn.Conv3d(256, 128, kernel_size=5),
+            torch.nn.BatchNorm3d(128),
+            torch.nn.ELU(),
+            torch.nn.MaxPool3d(kernel_size=2),
         )
 
         # Don't update params in VGG16 & only use in 2D image processing
@@ -112,7 +128,7 @@ class Encoder(torch.nn.Module):
             features = self.layer2(features)
             print(features.size())    # torch.Size([batch_size, 512, 8, 8])
             features = self.layer3(features)
-            print(features.size())    # torch.Size([batch_size, 256, 8, 8])
+            print(features.size())    # torch.Size([batch_size, 64, 8, 8, 8])
             '''
 
             # For 64 resolution / X-ray
@@ -133,16 +149,22 @@ class Encoder(torch.nn.Module):
 
             # For 32 resolution / Volume
             features = img.squeeze(dim=0)
-            # print(features.size()) # torch.Size([1, 3, 64, 64, 64])
+            # print(features.size()) # torch.Size([1, 3, 112, 112, 112])
             features = self.layer1(features)
-            # print(features.size()) # torch.Size([1, 8, 62, 62, 62])
+            # print(features.size()) # torch.Size([1, 32, 110, 110, 110])
             features = self.layer2(features)
-            # print(features.size()) # torch.Size([1, 16, 30, 30, 30])
+            # print(features.size()) # torch.Size([1, 64, 108, 108, 108])
             features = self.layer3(features)
-            # print(features.size()) # torch.Size([1, 32, 26, 26, 26])
+            # print(features.size()) # torch.Size([1, 128, 106, 106, 106])
             features = self.layer4(features)
-            # print(features.size()) # torch.Size([1, 64, 24, 24, 24])
+            # print(features.size()) # torch.Size([1, 256, 52, 52, 52])
             features = self.layer5(features)
+            # print(features.size()) # torch.Size([1, 256, 50, 50, 50])
+            features = self.layer6(features)
+            # print(features.size()) # torch.Size([1, 512, 24, 24, 24])
+            features = self.layer7(features)
+            # print(features.size()) # torch.Size([1, 256, 20, 20, 20])
+            features = self.layer8(features)
             # print(features.size()) # torch.Size([1, 128, 8, 8, 8])
 
             image_features.append(features)

@@ -143,12 +143,10 @@ def test_net(cfg,
             # with open('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.binvox', 'wb') as file:
                # utils.binvox_rw.write(volume, file)
 
-            '''
             rendering_views = utils.binvox_visualization.get_volume_views(gv, './output/image/test/gv',
                                                         vol_write_idx)
             np.save('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
             vol_write_idx = vol_write_idx + 1
-            '''
 
             # IoU per sample
             sample_iou = []

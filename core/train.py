@@ -7,6 +7,8 @@ import random
 import torch
 import torch.backends.cudnn
 import torch.utils.data
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel
 
 import utils.binvox_visualization
 import utils.data_loaders
@@ -23,7 +25,6 @@ from models.decoder import Decoder
 from models.refiner import Refiner
 from models.merger import Merger
 
-import numpy as np
 
 def train_net(cfg):
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
@@ -123,12 +124,16 @@ def train_net(cfg):
     merger_lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(merger_solver,
                                                                milestones=cfg.TRAIN.MERGER_LR_MILESTONES,
                                                                gamma=cfg.TRAIN.GAMMA)
-
+    '''
+    os.environ['MASTER_ADDR'] = '165.246.44.232'  # it tells which IP address it should look for process 0
+    os.environ['MASTER_PORT'] = '22'
+    dist.init_process_group(backend='nccl', rank=1, world_size=2, init_method='env://')
+    '''
     if torch.cuda.is_available():
-        encoder = torch.nn.DataParallel(encoder).cuda()
-        decoder = torch.nn.DataParallel(decoder).cuda()
-        refiner = torch.nn.DataParallel(refiner).cuda()
-        merger = torch.nn.DataParallel(merger).cuda()
+        encoder = torch.nn.DataParallel(encoder, device_ids=[0, 1], output_device=1).cuda()
+        decoder = torch.nn.DataParallel(decoder, device_ids=[0, 1], output_device=0).cuda()
+        refiner = torch.nn.DataParallel(refiner, device_ids=[0, 1], output_device=0).cuda()
+        merger = torch.nn.DataParallel(merger, device_ids=[0, 1], output_device=0).cuda()
 
     # Set up loss functions
     bce_loss = torch.nn.BCELoss()

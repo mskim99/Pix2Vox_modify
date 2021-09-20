@@ -12,6 +12,8 @@ import sys
 # Fix problem: no $DISPLAY environment variable
 matplotlib.use('Agg')
 
+import torch
+
 from argparse import ArgumentParser
 from datetime import datetime as dt
 from pprint import pprint
@@ -66,8 +68,8 @@ def main():
     pprint(cfg)
 
     # Set GPU to use
-    if type(cfg.CONST.DEVICE) == str:
-        os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE
+    # if type(cfg.CONST.DEVICE) == str:
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1, 0'
 
     # Start train/test process
     if not args.test:
