@@ -90,6 +90,8 @@ def test_net(cfg,
 
     # Set up loss functions
     bce_loss = torch.nn.BCELoss()
+    # mse_loss = torch.nn.MSELoss()
+    # l1_loss = torch.nn.L1Loss()
 
     # Testing loop
     n_samples = len(test_data_loader)
@@ -104,7 +106,7 @@ def test_net(cfg,
     merger.eval()
 
     vol_write_idx = 0
-
+    min_loss = 10000000.0
     for sample_idx, (taxonomy_id, sample_name, rendering_images, ground_truth_volume) in enumerate(test_data_loader):
         taxonomy_id = taxonomy_id[0] if isinstance(taxonomy_id[0], str) else taxonomy_id[0].item()
         sample_name = sample_name[0]
@@ -122,11 +124,19 @@ def test_net(cfg,
                 generated_volume = merger(raw_features, generated_volume)
             else:
                 generated_volume = torch.mean(generated_volume, dim=1)
+
+            generated_volume = generated_volume.float() / 255.
+            ground_truth_volume = ground_truth_volume.float() / 255.
+
             encoder_loss = bce_loss(generated_volume, ground_truth_volume) * 10
+            # encoder_loss = mse_loss(generated_volume, ground_truth_volume) * 100
+            # encoder_loss = l1_loss(generated_volume, ground_truth_volume) * 10
 
             if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
                 generated_volume = refiner(generated_volume)
                 refiner_loss = bce_loss(generated_volume, ground_truth_volume) * 10
+                # refiner_loss = mse_loss(generated_volume, ground_truth_volume) * 100
+                # refiner_loss = l1_loss(generated_volume, ground_truth_volume) * 10
             else:
                 refiner_loss = encoder_loss
 
@@ -135,20 +145,16 @@ def test_net(cfg,
             refiner_losses.update(refiner_loss.item())
 
             # Volume Visualization
-
+            '''
             gv = generated_volume.cpu().numpy()
-            # gvvd = gv.flatten()
-            # gvvd = gv.reshape(32, 32, 32)
-            # gvv = utils.binvox_rw.from_array(gv, [32, 32, 32], [0.0, 0.0, 0.0], 1.0)
-            # with open('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.binvox', 'wb') as file:
-               # utils.binvox_rw.write(volume, file)
-
-            rendering_views = utils.binvox_visualization.get_volume_views(gv, './output/image/test/gv',
+            rendering_views = utils.binvox_visualization.get_volume_views(gv, '/home/jzw/work/pix2vox/output/image/test/gv',
                                                         vol_write_idx)
             np.save('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
             vol_write_idx = vol_write_idx + 1
+            '''
 
             # IoU per sample
+            '''
             sample_iou = []
             for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(generated_volume, th).float()
@@ -161,6 +167,7 @@ def test_net(cfg,
                 test_iou[taxonomy_id] = {'n_samples': 0, 'iou': []}
             test_iou[taxonomy_id]['n_samples'] += 1
             test_iou[taxonomy_id]['iou'].append(sample_iou)
+            '''
 
             # Append generated volumes to TensorBoard
             if output_dir and sample_idx < 3:
@@ -168,23 +175,28 @@ def test_net(cfg,
                 # Volume Visualization
                 gv = generated_volume.cpu().numpy()
 
-                rendering_views = utils.binvox_visualization.get_volume_views(gv, './output/image/test/gv',
+                rendering_views = utils.binvox_visualization.get_volume_views(gv, '/home/jzw/work/pix2vox/output/image/test/gv',
                                                                               epoch_idx)
                 # print(np.shape(rendering_views))
                 # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
                 # test_writer.add_image('Test Sample#%02d/Volume Reconstructed' % sample_idx, rendering_views_im, epoch_idx)
                 gtv = ground_truth_volume.cpu().numpy()
-                rendering_views = utils.binvox_visualization.get_volume_views(gtv, './output/image/test/gtv',
+                rendering_views = utils.binvox_visualization.get_volume_views(gtv, '/home/jzw/work/pix2vox/output/image/test/gtv',
                                                                               epoch_idx)
                 # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
                 # test_writer.add_image('Test Sample#%02d/Volume GroundTruth' % sample_idx, rendering_views_im, epoch_idx)
 
-            # Print sample loss and IoU
-            print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s' %
-                  (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, encoder_loss.item(),
-                   refiner_loss.item(), ['%.4f' % si for si in sample_iou]))
+            # Print sample loss('IoU = %s' removed)
+            print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f'
+                  % (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, encoder_loss.item(), refiner_loss.item()
+                     # , ['%.4f' % si for si in sample_iou]
+                     ))
+
+            if encoder_loss < min_loss:
+                min_loss = encoder_loss
 
     # Output testing results
+    '''
     mean_iou = []
     for taxonomy_id in test_iou:
         test_iou[taxonomy_id]['iou'] = np.mean(test_iou[taxonomy_id]['iou'], axis=0)
@@ -219,9 +231,11 @@ def test_net(cfg,
 
     # Add testing results to TensorBoard
     max_iou = np.max(mean_iou)
+    '''
     if test_writer is not None:
         test_writer.add_scalar('EncoderDecoder/EpochLoss', encoder_losses.avg, epoch_idx)
         test_writer.add_scalar('Refiner/EpochLoss', refiner_losses.avg, epoch_idx)
-        test_writer.add_scalar('Refiner/IoU', max_iou, epoch_idx)
+        # test_writer.add_scalar('Refiner/IoU', max_iou, epoch_idx)
 
-    return max_iou
+    # return max_iou
+    return min_loss

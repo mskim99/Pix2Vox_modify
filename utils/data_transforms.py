@@ -434,12 +434,12 @@ class RandomBackground(object):
             random_bg = None
             if len(self.random_bg_files) > 0:
                 random_bg_file_path = random.choice(self.random_bg_files)
-                random_bg = cv2.imread(random_bg_file_path).astype(np.float32) / 255.
+                random_bg = cv2.imread(random_bg_file_path).astype(np.uint8)
 
             # Apply random background
                 processed_imgs = np.empty(shape=(0, img_height, img_width, img_channels - 1))
             for img_idx, img in enumerate(rendering_images):
-                alpha = (np.expand_dims(img[:, :, 3], axis=2) == 0).astype(np.float32)
+                alpha = (np.expand_dims(img[:, :, 3], axis=2) == 0).astype(np.uint8)
                 img = img[:, :, :3]
                 bg_color = random_bg if random.randint(0, 1) and random_bg is not None else np.array([[[r, g, b]]])
                 img = alpha * bg_color + (1 - alpha) * img

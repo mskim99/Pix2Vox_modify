@@ -89,6 +89,7 @@ for i in range(1, 58):
     '''
 
 # Store img number labeled by 'a', 'c', 's'
+'''
 for i in range(1, 58):
     f = open('I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/f_' + str(i).zfill(7) + '/rendering/views.txt', 'w')
 
@@ -118,7 +119,7 @@ for i in range(1, 58):
     path = 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/s*'
     files = glob.glob(path)
     f.write(str(files.__len__()) + ' ')
-
+'''
 ############################################################################################################################################
 # X-ray Image Processing
 ############################################################################################################################################
@@ -156,13 +157,17 @@ for i in range (49, 58):
                 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KIST_xray_23_24_spine/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/01.png')
     shutil.copy('I:/DK_Data_Process/i_1-2_Slices_Cropped_Xray_png/23_24_spine/Sagittal/m_' + str(i).zfill(3) + '_Sagittal_cropped_xray.png',
                 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KIST_xray_23_24_spine/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/02.png')
-    
-for i in range (49, 58):
-    shutil.copy('I:/DK_Data_Process/i_1-3_Target_Mesh/23_24_spine/res_64/m_' + str(i).zfill(3) + '_vrt_23_24_res_64.binvox',
-                'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KIST_xray_23_24_spine/KISTI_Vox64/00000024/m_' + str(i).zfill(7) + '/model.binvox')
+    '''
+
+for i in range (1, 58):
+    if os.path.exists('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/gtv_m_' + str(i).zfill(7) + '_a.binvox'):
+        shutil.copy('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/gtv_m_' + str(i).zfill(7) + '_a.binvox',
+        'J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume_CT/KISTI_Vox32/00000024/m_' + str(i).zfill(7) + '/model.binvox')
+        print(str(i) + ' exists')
                 
 
 # Rendering Metadata
+'''
 for i in range (24, 26):
     shutil.copy('I:/renderings.txt', 'I:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KIST_xray_23_24_spine/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/renderings.txt')
     '''

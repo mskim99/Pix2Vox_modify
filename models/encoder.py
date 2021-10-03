@@ -65,43 +65,51 @@ class Encoder(torch.nn.Module):
             torch.nn.Conv3d(3, 32, kernel_size=3),
             torch.nn.BatchNorm3d(32),
             torch.nn.ELU(),
+            torch.nn.Dropout3d(0.2),
         )
         self.layer2 = torch.nn.Sequential(
             torch.nn.Conv3d(32, 64, kernel_size=3),
             torch.nn.BatchNorm3d(64),
             torch.nn.ELU(),
+            torch.nn.Dropout3d(0.2),
         )
         self.layer3 = torch.nn.Sequential(
             torch.nn.Conv3d(64, 128, kernel_size=3),
             torch.nn.BatchNorm3d(128),
             torch.nn.ELU(),
+            torch.nn.Dropout3d(0.2),
         )
         self.layer4 = torch.nn.Sequential(
             torch.nn.Conv3d(128, 256, kernel_size=3),
             torch.nn.BatchNorm3d(256),
             torch.nn.ELU(),
+            torch.nn.Dropout3d(0.2),
             torch.nn.MaxPool3d(kernel_size=2),
         )
         self.layer5 = torch.nn.Sequential(
             torch.nn.Conv3d(256, 256, kernel_size=3),
             torch.nn.BatchNorm3d(256),
             torch.nn.ELU(),
+            torch.nn.Dropout3d(0.2),
         )
         self.layer6 = torch.nn.Sequential(
             torch.nn.Conv3d(256, 512, kernel_size=3),
             torch.nn.BatchNorm3d(512),
             torch.nn.ELU(),
+            torch.nn.Dropout3d(0.2),
             torch.nn.MaxPool3d(kernel_size=2),
         )
         self.layer7 = torch.nn.Sequential(
             torch.nn.Conv3d(512, 256, kernel_size=5),
             torch.nn.BatchNorm3d(256),
             torch.nn.ELU(),
+            torch.nn.Dropout3d(0.2),
         )
         self.layer8 = torch.nn.Sequential(
             torch.nn.Conv3d(256, 128, kernel_size=5),
             torch.nn.BatchNorm3d(128),
             torch.nn.ELU(),
+            torch.nn.Dropout3d(0.2),
             torch.nn.MaxPool3d(kernel_size=2),
         )
 

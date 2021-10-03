@@ -69,7 +69,7 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
         for image_paths in selected_rendering_image_paths: # 3D > 2D
             rendering_images = []
             for image_path in image_paths:
-                rendering_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
+                rendering_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED).astype(np.uint8)
                 if len(rendering_image.shape) < 3:
                     print('[FATAL] %s It seems that there is something wrong with the image file %s' %
                           (dt.now(), image_path))
@@ -83,11 +83,11 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
 
         if suffix == '.mat':
             volume = scipy.io.loadmat(volume_path)
-            volume = volume['Volume'].astype(np.float32)
+            volume = volume['Volume'].astype(np.uint8)
         elif suffix == '.binvox':
             with open(volume_path, 'rb') as f:
                 volume = utils.binvox_rw.read_as_3d_array(f)
-                volume = volume.data.astype(np.float32)
+                volume = volume.data.astype(np.uint8)
 
         return taxonomy_name, sample_name, np.asarray(ct_volume_slices), volume
 
@@ -211,7 +211,7 @@ class Pascal3dDataset(torch.utils.data.dataset.Dataset):
         volume_path = self.file_list[idx]['volume']
 
         # Get data of rendering images
-        rendering_image = cv2.imread(rendering_image_path, cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
+        rendering_image = cv2.imread(rendering_image_path, cv2.IMREAD_UNCHANGED).astype(np.uint8)
 
         if len(rendering_image.shape) < 3:
             print('[WARN] %s It seems the image file %s is grayscale.' % (dt.now(), rendering_image_path))
@@ -220,7 +220,7 @@ class Pascal3dDataset(torch.utils.data.dataset.Dataset):
         # Get data of volume
         with open(volume_path, 'rb') as f:
             volume = utils.binvox_rw.read_as_3d_array(f)
-            volume = volume.data.astype(np.float32)
+            volume = volume.data.astype(np.uint8)
 
         return taxonomy_name, sample_name, np.asarray([rendering_image]), volume, bounding_box
 
@@ -347,7 +347,7 @@ class Pix3dDataset(torch.utils.data.dataset.Dataset):
         volume_path = self.file_list[idx]['volume']
 
         # Get data of rendering images
-        rendering_image = cv2.imread(rendering_image_path, cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
+        rendering_image = cv2.imread(rendering_image_path, cv2.IMREAD_UNCHANGED).astype(np.uint8)
 
         if len(rendering_image.shape) < 3:
             print('[WARN] %s It seems the image file %s is grayscale.' % (dt.now(), rendering_image_path))
@@ -356,7 +356,7 @@ class Pix3dDataset(torch.utils.data.dataset.Dataset):
         # Get data of volume
         with open(volume_path, 'rb') as f:
             volume = utils.binvox_rw.read_as_3d_array(f)
-            volume = volume.data.astype(np.float32)
+            volume = volume.data.astype(np.uint8)
 
         return taxonomy_name, sample_name, np.asarray([rendering_image]), volume, bounding_box
 
