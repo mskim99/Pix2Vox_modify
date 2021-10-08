@@ -14,6 +14,7 @@ import utils.binvox_visualization
 import utils.data_loaders
 import utils.data_transforms
 import utils.network_utils
+import utils.loss_function
 
 from datetime import datetime as dt
 from tensorboardX import SummaryWriter
@@ -90,37 +91,45 @@ def train_net(cfg):
     if cfg.TRAIN.POLICY == 'adam':
         encoder_solver = torch.optim.Adam(filter(lambda p: p.requires_grad, encoder.parameters()),
                                           lr=cfg.TRAIN.ENCODER_LEARNING_RATE,
-                                          betas=cfg.TRAIN.BETAS,
-                                          weight_decay=0.2)
+                                          betas=cfg.TRAIN.BETAS
+                                          , weight_decay=0.2
+                                          )
         decoder_solver = torch.optim.Adam(decoder.parameters(),
                                           lr=cfg.TRAIN.DECODER_LEARNING_RATE,
-                                          betas=cfg.TRAIN.BETAS,
-                                          weight_decay=0.2)
+                                          betas=cfg.TRAIN.BETAS
+                                          , weight_decay=0.2
+                                          )
         refiner_solver = torch.optim.Adam(refiner.parameters(),
                                           lr=cfg.TRAIN.REFINER_LEARNING_RATE,
-                                          betas=cfg.TRAIN.BETAS,
-                                          weight_decay=0.2)
+                                          betas=cfg.TRAIN.BETAS
+                                          , weight_decay=0.2
+                                          )
         merger_solver = torch.optim.Adam(merger.parameters(),
                                          lr=cfg.TRAIN.MERGER_LEARNING_RATE,
-                                         betas=cfg.TRAIN.BETAS,
-                                         weight_decay=0.2)
+                                         betas=cfg.TRAIN.BETAS
+                                         , weight_decay=0.2
+                                         )
     elif cfg.TRAIN.POLICY == 'sgd':
         encoder_solver = torch.optim.SGD(filter(lambda p: p.requires_grad, encoder.parameters()),
                                          lr=cfg.TRAIN.ENCODER_LEARNING_RATE,
-                                         momentum=cfg.TRAIN.MOMENTUM,
-                                         weight_decay=0.2)
+                                         momentum=cfg.TRAIN.MOMENTUM
+                                         , weight_decay=0.2
+                                         )
         decoder_solver = torch.optim.SGD(decoder.parameters(),
                                          lr=cfg.TRAIN.DECODER_LEARNING_RATE,
-                                         momentum=cfg.TRAIN.MOMENTUM,
-                                         weight_decay=0.2)
+                                         momentum=cfg.TRAIN.MOMENTUM
+                                         , weight_decay=0.2
+                                         )
         refiner_solver = torch.optim.SGD(refiner.parameters(),
                                          lr=cfg.TRAIN.REFINER_LEARNING_RATE,
-                                         momentum=cfg.TRAIN.MOMENTUM,
-                                         weight_decay=0.2)
+                                         momentum=cfg.TRAIN.MOMENTUM
+                                         , weight_decay=0.2
+                                         )
         merger_solver = torch.optim.SGD(merger.parameters(),
                                         lr=cfg.TRAIN.MERGER_LEARNING_RATE,
-                                        momentum=cfg.TRAIN.MOMENTUM,
-                                        weight_decay=0.2)
+                                        momentum=cfg.TRAIN.MOMENTUM
+                                        , weight_decay=0.2
+                                        )
     else:
         raise Exception('[FATAL] %s Unknown optimizer %s.' % (dt.now(), cfg.TRAIN.POLICY))
 
@@ -149,7 +158,7 @@ def train_net(cfg):
         merger = torch.nn.DataParallel(merger, device_ids=[0, 1], output_device=0).cuda()
 
     # Set up loss functions
-    bce_loss = torch.nn.BCELoss()
+    # bce_loss = torch.nn.BCELoss()
     # mse_loss = torch.nn.MSELoss()
     # l1_loss = torch.nn.L1Loss()
 
@@ -239,19 +248,21 @@ def train_net(cfg):
             else:
                 generated_volumes = torch.mean(generated_volumes, dim=1)
 
-            generated_volumes = generated_volumes.float() / 255.
+            generated_volumes = generated_volumes.float()
             ground_truth_volumes = ground_truth_volumes.float() / 255.
 
             # print("gv size : " + str(generated_volumes.size()))
             # print("gtv size : " + str(ground_truth_volumes.size()))
-            encoder_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
-            # encoder_loss = mse_loss(generated_volumes, ground_truth_volumes) * 100
+            # encoder_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
+            # encoder_loss = mse_loss(generated_volumes, ground_truth_volumes) * 300
+            encoder_loss = utils.loss_function.loss_gtv(generated_volumes, ground_truth_volumes, 0.2914, 0.5, 1.0) * 300
             # encoder_loss = l1_loss(generated_volumes, ground_truth_volumes) * 10
 
             if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
                 generated_volumes = refiner(generated_volumes)
-                refiner_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
-                # refiner_loss = mse_loss(generated_volumes, ground_truth_volumes) * 100
+                # refiner_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
+                # refiner_loss = mse_loss(generated_volumes, ground_truth_volumes) * 300
+                refiner_loss = utils.loss_function.loss_gtv(generated_volumes, ground_truth_volumes, 0.2914, 0.5, 1.0) * 300
                 # refiner_loss = l1_loss(generated_volumes, ground_truth_volumes) * 10
             else:
                 refiner_loss = encoder_loss
@@ -313,8 +324,8 @@ def train_net(cfg):
                   (dt.now(), epoch_idx + 2, cfg.TRAIN.NUM_EPOCHES, n_views_rendering))
 
         # Validate the training models
-        # iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger)
-        encoder_loss = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger)
+        iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger)
+        # encoder_loss = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger)
 
         # Save weights to file
         if (epoch_idx + 1) % cfg.TRAIN.SAVE_FREQ == 0:
@@ -326,19 +337,19 @@ def train_net(cfg):
                                                  refiner, refiner_solver, merger, merger_solver, best_iou, best_epoch)
 
         # if iou > best_iou:
-        if encoder_loss < best_loss:
+        if iou > best_iou:
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            # best_iou = iou
-            best_loss = encoder_loss
+            best_iou = iou
+            # best_loss = encoder_loss
             best_epoch = epoch_idx + 1
             utils.network_utils.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints/best-ckpt.pth', epoch_idx + 1, encoder,
                                                  encoder_solver, decoder, decoder_solver, refiner, refiner_solver,
                                                  merger, merger_solver, best_iou, best_epoch)
 
-            # print('[INFO] %s Best epoch [%d] / Best IoU [%.4f]' % (dt.now(), best_epoch, best_iou))
-            print('[INFO] %s Best epoch [%d] / Best Loss [%.4f]' % (dt.now(), best_epoch, best_loss))
+            print('[INFO] %s Best epoch [%d] / Best IoU [%.4f]' % (dt.now(), best_epoch, best_iou))
+            # print('[INFO] %s Best epoch [%d] / Best Loss [%.4f]' % (dt.now(), best_epoch, best_loss))
 
     # Close SummaryWriter for TensorBoard
     train_writer.close()

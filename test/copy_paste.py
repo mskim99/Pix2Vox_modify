@@ -160,9 +160,9 @@ for i in range (49, 58):
     '''
 
 for i in range (1, 58):
-    if os.path.exists('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/gtv_m_' + str(i).zfill(7) + '_a.binvox'):
-        shutil.copy('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/gtv_m_' + str(i).zfill(7) + '_a.binvox',
-        'J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume_CT/KISTI_Vox32/00000024/m_' + str(i).zfill(7) + '/model.binvox')
+    if os.path.exists('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/change_length/gtv_f_' + str(i).zfill(7) + '_a_len.binvox'):
+        shutil.copy('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/change_length/gtv_f_' + str(i).zfill(7) + '_a_len.binvox',
+        'J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume_CT_len/KISTI_Vox32/00000024/f_' + str(i).zfill(7) + '/model.binvox')
         print(str(i) + ' exists')
                 
 

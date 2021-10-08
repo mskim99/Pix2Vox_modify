@@ -89,7 +89,7 @@ def test_net(cfg,
             merger.load_state_dict(checkpoint['merger_state_dict'])
 
     # Set up loss functions
-    bce_loss = torch.nn.BCELoss()
+    # bce_loss = torch.nn.BCELoss()
     # mse_loss = torch.nn.MSELoss()
     # l1_loss = torch.nn.L1Loss()
 
@@ -125,17 +125,19 @@ def test_net(cfg,
             else:
                 generated_volume = torch.mean(generated_volume, dim=1)
 
-            generated_volume = generated_volume.float() / 255.
+            generated_volume = generated_volume.float()
             ground_truth_volume = ground_truth_volume.float() / 255.
 
-            encoder_loss = bce_loss(generated_volume, ground_truth_volume) * 10
-            # encoder_loss = mse_loss(generated_volume, ground_truth_volume) * 100
+            # encoder_loss = bce_loss(generated_volume, ground_truth_volume) * 10
+            # encoder_loss = mse_loss(generated_volume, ground_truth_volume) * 300
+            encoder_loss = utils.loss_function.loss_gtv(generated_volume, ground_truth_volume, 0.2914, 0.5, 1.0) * 300
             # encoder_loss = l1_loss(generated_volume, ground_truth_volume) * 10
 
             if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
                 generated_volume = refiner(generated_volume)
-                refiner_loss = bce_loss(generated_volume, ground_truth_volume) * 10
-                # refiner_loss = mse_loss(generated_volume, ground_truth_volume) * 100
+                # refiner_loss = bce_loss(generated_volume, ground_truth_volume) * 10
+                # refiner_loss = mse_loss(generated_volume, ground_truth_volume) * 300
+                refiner_loss = utils.loss_function.loss_gtv(generated_volume, ground_truth_volume, 0.2914, 0.5, 1.0) * 300
                 # refiner_loss = l1_loss(generated_volume, ground_truth_volume) * 10
             else:
                 refiner_loss = encoder_loss
@@ -149,12 +151,11 @@ def test_net(cfg,
             gv = generated_volume.cpu().numpy()
             rendering_views = utils.binvox_visualization.get_volume_views(gv, '/home/jzw/work/pix2vox/output/image/test/gv',
                                                         vol_write_idx)
-            np.save('./output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
+            np.save('/home/jzw/work/pix2vox/output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
             vol_write_idx = vol_write_idx + 1
             '''
-
+            
             # IoU per sample
-            '''
             sample_iou = []
             for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(generated_volume, th).float()
@@ -167,7 +168,6 @@ def test_net(cfg,
                 test_iou[taxonomy_id] = {'n_samples': 0, 'iou': []}
             test_iou[taxonomy_id]['n_samples'] += 1
             test_iou[taxonomy_id]['iou'].append(sample_iou)
-            '''
 
             # Append generated volumes to TensorBoard
             if output_dir and sample_idx < 3:
@@ -196,7 +196,6 @@ def test_net(cfg,
                 min_loss = encoder_loss
 
     # Output testing results
-    '''
     mean_iou = []
     for taxonomy_id in test_iou:
         test_iou[taxonomy_id]['iou'] = np.mean(test_iou[taxonomy_id]['iou'], axis=0)
@@ -231,11 +230,10 @@ def test_net(cfg,
 
     # Add testing results to TensorBoard
     max_iou = np.max(mean_iou)
-    '''
     if test_writer is not None:
         test_writer.add_scalar('EncoderDecoder/EpochLoss', encoder_losses.avg, epoch_idx)
         test_writer.add_scalar('Refiner/EpochLoss', refiner_losses.avg, epoch_idx)
         # test_writer.add_scalar('Refiner/IoU', max_iou, epoch_idx)
 
-    # return max_iou
-    return min_loss
+    return max_iou
+    # return min_loss
