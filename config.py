@@ -25,10 +25,11 @@ __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/Shapenet/ShapeNetVox32
 # ShapeNet Modified
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = '/home/jzw/work/pix2vox/datasets/KISTI.json'
 # __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH  = './datasets/PascalShapeNet.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_len/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
-__C.DATASETS.SHAPENET.RENDERING_VIEWS        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_len/KISTI_Rendering/%s/%s/rendering/views.txt'
+__C.DATASETS.SHAPENET.RENDERING_PATH        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
+__C.DATASETS.SHAPENET.RENDERING_VIEWS        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh/KISTI_Rendering/%s/%s/rendering/views.txt'
 # __C.DATASETS.SHAPENET.RENDERING_PATH      = '/home/hzxie/Datasets/ShapeNet/PascalShapeNetRendering/%s/%s/render_%04d.jpg'
-__C.DATASETS.SHAPENET.VOXEL_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_len/KISTI_Vox32/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh/KISTI_Vox32/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh/KISTI_Vox32_BD/%s/%s/model.binvox'
 
 __C.DATASETS.PASCAL3D                       = edict()
 __C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'
@@ -90,17 +91,17 @@ __C.TRAIN.RESUME_TRAIN                      = False
 __C.TRAIN.NUM_WORKER                        = 8             # number of data workers
 __C.TRAIN.NUM_EPOCHES                       = 250
 __C.TRAIN.BRIGHTNESS                        = .4
-__C.TRAIN.CONTRAST                          = .4
+__C.TRAIN.CONTRAST                          = .8
 __C.TRAIN.SATURATION                        = .4
 __C.TRAIN.NOISE_STD                         = .1
 __C.TRAIN.RANDOM_BG_COLOR_RANGE             = [[225, 255], [225, 255], [225, 255]]
 __C.TRAIN.POLICY                            = 'adam'        # available options: sgd, adam
 __C.TRAIN.EPOCH_START_USE_REFINER           = 0
 __C.TRAIN.EPOCH_START_USE_MERGER            = 0
-__C.TRAIN.ENCODER_LEARNING_RATE             = 1e-3
-__C.TRAIN.DECODER_LEARNING_RATE             = 1e-3
-__C.TRAIN.REFINER_LEARNING_RATE             = 1e-3
-__C.TRAIN.MERGER_LEARNING_RATE              = 1e-3
+__C.TRAIN.ENCODER_LEARNING_RATE             = 1e-4
+__C.TRAIN.DECODER_LEARNING_RATE             = 1e-4
+__C.TRAIN.REFINER_LEARNING_RATE             = 1e-4
+__C.TRAIN.MERGER_LEARNING_RATE              = 1e-4
 __C.TRAIN.ENCODER_LR_MILESTONES             = [150]
 __C.TRAIN.DECODER_LR_MILESTONES             = [150]
 __C.TRAIN.REFINER_LR_MILESTONES             = [150]
@@ -108,7 +109,7 @@ __C.TRAIN.MERGER_LR_MILESTONES              = [150]
 __C.TRAIN.BETAS                             = (.9, .999)
 __C.TRAIN.MOMENTUM                          = .9
 __C.TRAIN.GAMMA                             = .5
-__C.TRAIN.SAVE_FREQ                         = 50            # weights will be overwritten every save_freq epoch
+__C.TRAIN.SAVE_FREQ                         = 25            # weights will be overwritten every save_freq epoch
 __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
 
 #

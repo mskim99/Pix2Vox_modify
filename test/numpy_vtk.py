@@ -5,6 +5,7 @@ import cv2
 import os
 # from fill_holes import fill_holes
 
+'''
 for j in range (50, 150, 50):
     for i in range(0, 18):
         x_save_load = np.load(
@@ -29,10 +30,10 @@ for j in range (50, 150, 50):
         writer.Write()
 
     print(str(j) + ' index ended')
+    '''
 
-'''
 for i in range (0, 18):
-    x_save_load = np.load('J:/Program/Pix2Vox-master/voxel_log/211005_2_ct_32_vol_test_epoch_150_MSE_Loss/gv_' + str(i).zfill(6) + '.npy')
+    x_save_load = np.load('J:/Program/Pix2Vox-master/voxel_log/211013_1_ct_vol_e_pix2vox_test_epoch_best_CSE_LN/gv_' + str(i).zfill(6) + '.npy')
 
     imdata = vtk.vtkImageData()
 
@@ -44,8 +45,10 @@ for i in range (0, 18):
     imdata.SetOrigin([0, 0, 0])
     imdata.GetPointData().SetScalars(depthArray)
 
+    if not os.path.isdir('J:/Program/Pix2Vox-master/voxel_log/211013_1_ct_vol_e_pix2vox_test_epoch_best_CSE_LN_mha'):
+        os.mkdir('J:/Program/Pix2Vox-master/voxel_log/211013_1_ct_vol_e_pix2vox_test_epoch_best_CSE_LN_mha')
+
     writer = vtk.vtkMetaImageWriter()
-    writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/211005_2_ct_32_vol_test_epoch_150_MSE_Loss_mha/gv_' + str(i).zfill(6) + '.mha')
+    writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/211013_1_ct_vol_e_pix2vox_test_epoch_best_CSE_LN_mha/gv_' + str(i).zfill(6) + '.mha')
     writer.SetInputData(imdata)
     writer.Write()
-    '''

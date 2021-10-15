@@ -40,12 +40,12 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
         return len(self.file_list)
 
     def __getitem__(self, idx):
-        taxonomy_name, sample_name, rendering_images, volume = self.get_datum(idx)
+        taxonomy_name, sample_name, rendering_images, volume, volume_mesh = self.get_datum(idx)
 
         if self.transforms:
             rendering_images = self.transforms(rendering_images)
 
-        return taxonomy_name, sample_name, rendering_images, volume
+        return taxonomy_name, sample_name, rendering_images, volume, volume_mesh
 
     def set_n_views_rendering(self, n_views_rendering):
         self.n_views_rendering = n_views_rendering
@@ -55,6 +55,7 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
         sample_name = self.file_list[idx]['sample_name']
         rendering_image_paths = self.file_list[idx]['rendering_images']
         volume_path = self.file_list[idx]['volume']
+        volume_mesh_path = self.file_list[idx]['volume_mesh']
 
         # Get data of rendering images
         if self.dataset_type == DatasetType.TRAIN:
@@ -89,7 +90,19 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
                 volume = utils.binvox_rw.read_as_3d_array(f)
                 volume = volume.data.astype(np.uint8)
 
-        return taxonomy_name, sample_name, np.asarray(ct_volume_slices), volume
+
+        # Get data of volume
+        _, suffix = os.path.splitext(volume_mesh_path)
+
+        if suffix == '.mat':
+            volume_mesh = scipy.io.loadmat(volume_mesh_path)
+            volume_mesh = volume_mesh['Volume'].astype(np.uint8)
+        elif suffix == '.binvox':
+            with open(volume_path, 'rb') as f:
+                volume_mesh = utils.binvox_rw.read_as_3d_array(f)
+                volume_mesh = volume_mesh.data.astype(np.uint8)
+
+        return taxonomy_name, sample_name, np.asarray(ct_volume_slices), volume, volume_mesh
 
 
 # //////////////////////////////// = End of ShapeNetDataset Class Definition = ///////////////////////////////// #
@@ -101,6 +114,7 @@ class ShapeNetDataLoader:
         self.rendering_image_path_template = cfg.DATASETS.SHAPENET.RENDERING_PATH
         self.rendering_view_template = cfg.DATASETS.SHAPENET.RENDERING_VIEWS
         self.volume_path_template = cfg.DATASETS.SHAPENET.VOXEL_PATH
+        self.volume_mesh_path_template = cfg.DATASETS.SHAPENET.VOXEL_MESH_PATH
 
         # Load all taxonomies of the dataset
         with open(cfg.DATASETS.SHAPENET.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
@@ -139,6 +153,13 @@ class ShapeNetDataLoader:
                       (dt.now(), taxonomy_folder_name, sample_name))
                 continue
 
+            # Get file path of volumes (Mesh)
+            volume_mesh_file_path = self.volume_mesh_path_template % (taxonomy_folder_name, sample_name)
+            if not os.path.exists(volume_mesh_file_path):
+                print('[WARN] %s Ignore sample %s/%s since volume (mesh) file not exists.' %
+                      (dt.now(), taxonomy_folder_name, sample_name))
+                continue
+
             # Get view number of rendering images (prefix)
             prefix_view_file_path = self.rendering_view_template % (taxonomy_folder_name, sample_name)
             f = open(prefix_view_file_path, 'r')
@@ -174,6 +195,7 @@ class ShapeNetDataLoader:
                 'sample_name': sample_name,
                 'rendering_images': ct_volume_file_path,
                 'volume': volume_file_path,
+                'volume_mesh': volume_mesh_file_path,
             })
 
             # Report the progress of reading dataset
