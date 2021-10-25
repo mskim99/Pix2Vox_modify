@@ -13,7 +13,7 @@ import vtk
 vol_len = 13
 
 for i in range (1, 58):
-    image_paths = glob.glob('J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/f_' + str(i).zfill(7) + '/rendering/a*.png')
+    image_paths = glob.glob('J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/a*.png')
     if len(image_paths) > 0:
 
         print('f ' + str(i) + ' exist')
@@ -28,10 +28,15 @@ for i in range (1, 58):
                         (dt.now(), image_path))
                 sys.exit(2)
 
+            # Thresholding
+            '''
             ret, thr_img = cv2.threshold(rendering_image, 85, 255, cv2.THRESH_TOZERO)
             max_val = thr_img.max()
             gtv_volume_slices[:, idx, :] = thr_img[:, :, 0]
             gtv_volume_slices[:, idx, :] *= math.ceil(255. / float(max_val))
+            '''
+
+            gtv_volume_slices[:, idx, :] = rendering_image[:, :, 0]
 
         gtv_volume_slices = np.array(gtv_volume_slices, order='F')
         # gtv_volume_slices = gtv_volume_slices[:, :, :, 0]
@@ -43,13 +48,15 @@ for i in range (1, 58):
         # for j in range (0, vol_len):
             # res_volume[5:27, j, 2:30] = gtv_volume_slices[:, math.ceil(float(j) * float(vol_len) / float(len(image_paths))), :]
         for j in range(0, 32):
-            res_volume[:, j, :] = gtv_volume_slices[:, math.ceil(float(j) * float(vol_len) / float(len(image_paths))), :]
+            res_volume[:, j, :] = gtv_volume_slices[:, math.ceil(float(j) * float(len(image_paths) - 1) / 32.), :]
         # res_volume[5:27, 0:len(image_paths), 2:30] = gtv_volume_slices[:, :, :]
 
-        voxels = binvox_rw.from_array(res_volume, [32, 32, 32], [0.0, 0.0, 0.0], 1, fix_coords=True)
-        with open('J:/Program/Pix2Vox-master/voxel_gtv_log/gtv_f_' + str(i).zfill(7) + '_a_thr_85_norm.binvox', 'wb') as f:
-            voxels.write(f)
+        res_volume = res_volume.swapaxes(0, 2)
 
+        voxels = binvox_rw.from_array(res_volume, [32, 32, 32], [0.0, 0.0, 0.0], 1, fix_coords=True)
+        with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x2/gtv_m_' + str(i).zfill(7) + '_a.binvox', 'wb') as f:
+            voxels.write(f)
+'''
 for i in range(0, 58):
     image_paths = glob.glob(
         'J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(
@@ -88,4 +95,5 @@ for i in range(0, 58):
         voxels = binvox_rw.from_array(res_volume, [32, 32, 32], [0.0, 0.0, 0.0], 1, fix_coords=True)
         with open('J:/Program/Pix2Vox-master/voxel_gtv_log/gtv_m_' + str(i).zfill(7) + '_a_thr_85_norm.binvox', 'wb') as f:
             voxels.write(f)
+            '''
 

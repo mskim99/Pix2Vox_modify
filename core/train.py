@@ -152,16 +152,16 @@ def train_net(cfg):
     dist.init_process_group(backend='nccl', rank=1, world_size=2, init_method='env://')
     '''
     if torch.cuda.is_available():
-        encoder = torch.nn.DataParallel(encoder, device_ids=[0, 1], output_device=1).cuda()
-        decoder = torch.nn.DataParallel(decoder, device_ids=[0, 1], output_device=0).cuda()
-        refiner = torch.nn.DataParallel(refiner, device_ids=[0, 1], output_device=0).cuda()
-        merger = torch.nn.DataParallel(merger, device_ids=[0, 1], output_device=0).cuda()
+        encoder = torch.nn.DataParallel(encoder, device_ids=[0, 1]).cuda()
+        decoder = torch.nn.DataParallel(decoder, device_ids=[0, 1]).cuda()
+        refiner = torch.nn.DataParallel(refiner, device_ids=[0, 1]).cuda()
+        merger = torch.nn.DataParallel(merger, device_ids=[0, 1]).cuda()
 
     # Set up loss functions
     bce_loss = torch.nn.BCELoss()
     # ce_loss = torch.nn.CrossEntropyLoss()
     mse_loss = torch.nn.MSELoss()
-    # l1_loss = torch.nn.L1Loss()
+    l1_loss = torch.nn.L1Loss()
     # smooth_l1_loss = torch.nn.SmoothL1Loss()
     # huber_loss = torch.nn.HuberLoss(delta=0.5)
 
@@ -172,7 +172,7 @@ def train_net(cfg):
     best_epoch = -1
     if 'WEIGHTS' in cfg.CONST and cfg.TRAIN.RESUME_TRAIN:
         print('[INFO] %s Recovering from %s ...' % (dt.now(), cfg.CONST.WEIGHTS))
-        checkpoint = torch.load(cfg.CONST.WEIGHTS)
+        checkpoint = torch.load(cfg.CONST.WEIGHTS, map_location=lambda storage, loc: storage)
         init_epoch = checkpoint['epoch_idx']
         best_iou = checkpoint['best_iou']
         best_epoch = checkpoint['best_epoch']
@@ -204,6 +204,8 @@ def train_net(cfg):
         # Batch average meterics
         batch_time = utils.network_utils.AverageMeter()
         data_time = utils.network_utils.AverageMeter()
+        gtv_mse_losses = utils.network_utils.AverageMeter()
+        gtv_dice_losses = utils.network_utils.AverageMeter()
         gtv_losses = utils.network_utils.AverageMeter()
         gtvm_losses = utils.network_utils.AverageMeter()
         encoder_losses = utils.network_utils.AverageMeter()
@@ -275,25 +277,17 @@ def train_net(cfg):
             bce_logits_loss = torch.nn.BCEWithLogitsLoss(pos_weight=gtv_target)
             '''
             '''
-            loss_iou_thres = [0.2, 0.3, 0.4, 0.5]
-            loss_iou_weights = [2.0, 1.0, 1.0, 2.0]
-            loss_ious = 0.0
-            for index in range(0, 4):
-                _volume = torch.ge(generated_volumes, loss_iou_thres[index]).float()
-                _gt_volume = torch.ge(ground_truth_volumes, loss_iou_thres[index]).float()
-                intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
-                union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
-                part_loss_iou = 0.0
-                if index == 0 | index == 1:
-                    part_loss_iou = loss_iou_weights[index] * (intersection / union)
-                elif index == 2 | index == 3:
-                    part_loss_iou = loss_iou_weights[index] * (1. - (intersection / union))
-                loss_ious = loss_ious + part_loss_iou
-                '''
+            loss_iou_thres = 0.4
+            _volume = torch.ge(generated_volumes, loss_iou_thres).float()
+            _gt_volume = torch.ge(ground_truth_volumes_mesh, loss_iou_thres).float()
+            intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
+            union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
+            iou_weight = (1. - (intersection / union))
+            '''
+
             # print("gv size : " + str(generated_volumes.size()))
             # print("gtv size : " + str(ground_truth_volumes.size()))
             # encoder_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
-            gtv_loss = mse_loss(generated_volumes, ground_truth_volumes) * 300
             # encoder_loss = utils.loss_function.loss_gtv(generated_volumes, ground_truth_volumes, 0.4, 0.5, 0.5) * 300
             # encoder_loss = l1_loss(generated_volumes, ground_truth_volumes) * 10
             # encoder_loss = smooth_l1_loss(generated_volumes, ground_truth_volumes) * 300
@@ -302,8 +296,11 @@ def train_net(cfg):
             # old_loss = bce_logits_loss(generated_volumes, gtv_target) * 30
             # encoder_loss = 3e12 * utils.loss_function.ls_loss(generated_volumes, ground_truth_volumes, 0.3137, 1.)
             # encoder_loss = utils.loss_function.dice_loss(generated_volumes, ground_truth_volumes, 0.4, 1.0, 30.)
-            gtvm_loss = bce_loss(generated_volumes, ground_truth_volumes_mesh) * 10
-            encoder_loss = (gtv_loss + gtvm_loss) / 2.
+            gtv_mse_loss = mse_loss(generated_volumes, ground_truth_volumes) * 150.
+            gtv_dice_loss = utils.loss_function.dice_loss(generated_volumes, ground_truth_volumes, 0.4) * 30.
+            gtv_loss = gtv_dice_loss
+            gtvm_loss = bce_loss(generated_volumes, ground_truth_volumes_mesh) * 30.
+            encoder_loss = (gtvm_loss + gtv_loss) * 0.5
 
             '''
             if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
@@ -337,10 +334,13 @@ def train_net(cfg):
             merger_solver.step()
 
             # Append loss to average metrics
+            gtv_mse_losses.update(gtv_mse_loss.item())
+            gtv_dice_losses.update(gtv_dice_loss.item())
             gtv_losses.update(gtv_loss.item())
             gtvm_losses.update(gtvm_loss.item())
             encoder_losses.update(encoder_loss.item())
             refiner_losses.update(refiner_loss.item())
+
             # Append loss to TensorBoard
             n_itr = epoch_idx * n_batches + batch_idx
             train_writer.add_scalar('EncoderDecoder/BatchLoss', encoder_loss.item(), n_itr)
@@ -350,9 +350,9 @@ def train_net(cfg):
             batch_time.update(time() - batch_end_time)
             batch_end_time = time()
             print(
-                '[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) VLoss = %.4f MLoss = %.4f EDLoss = %.4f'
+                '[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) V_L1Loss = %.4f V_DLoss = %.4f VLoss = %.4f MLoss = %.4f EDLoss = %.4f'
                 % (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, batch_idx + 1, n_batches, batch_time.val,
-                   data_time.val, gtv_loss.item(), gtvm_loss.item(), encoder_loss.item()))
+                   data_time.val, gtv_mse_loss.item(), gtv_dice_loss.item(), gtv_loss.item(), gtvm_loss.item(), encoder_loss.item()))
 
         # Append epoch loss to TensorBoard
         train_writer.add_scalar('EncoderDecoder/EpochLoss', encoder_losses.avg, epoch_idx + 1)
@@ -366,8 +366,9 @@ def train_net(cfg):
 
         # Tick / tock
         epoch_end_time = time()
-        print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) VLoss = %.4f MLoss = %.4f EDLoss = %.4f' %
-              (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, epoch_end_time - epoch_start_time, gtv_losses.avg, gtvm_losses.avg, encoder_losses.avg))
+        print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) V_L1Loss = %.4f V_DLoss = %.4f VLoss = %.4f MLoss = %.4f EDLoss = %.4f' %
+              (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, epoch_end_time - epoch_start_time, gtv_mse_losses.avg, gtv_dice_losses.avg,
+               gtv_losses.avg, gtvm_losses.avg, encoder_losses.avg))
 
         # Update Rendering Views
         if cfg.TRAIN.UPDATE_N_VIEWS_RENDERING:

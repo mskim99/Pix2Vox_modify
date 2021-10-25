@@ -4,9 +4,9 @@ import vtk
 import glob
 
 for i in range (1, 2):
-    image_paths = glob.glob('J:/DK_Data_Process/i_1-3_Target_Mesh/24_spine/res_32_rot_xz_90_y_180/f_' + str(i).zfill(3) + '_vrt_24_prc.binvox')
+    image_paths = glob.glob('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x2_thres_0_35/gtv_f_001_a.binvox')
     if len(image_paths) > 0:
-        with open('J:/DK_Data_Process/i_1-3_Target_Mesh/24_spine/res_32_rot_xz_90_y_180/f_' + str(i).zfill(3) + '_vrt_24_prc.binvox', 'rb') as f:
+        with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x2_thres_0_35/gtv_f_001_a.binvox', 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
 
         data = model.data
@@ -22,7 +22,7 @@ for i in range (1, 2):
         imdata.GetPointData().SetScalars(depthArray)
 
         writer = vtk.vtkMetaImageWriter()
-        writer.SetFileName('J:/DK_Data_Process/i_1-3_Target_Mesh/24_spine/res_32_rot_xz_90_y_180/f_001_vrt_24_prc.mha')
+        writer.SetFileName('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x2_thres_0_35/gtv_f_001_a.mha')
         writer.SetInputData(imdata)
         writer.Write()
 

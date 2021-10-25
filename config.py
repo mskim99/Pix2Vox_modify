@@ -23,13 +23,13 @@ __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/Shapenet/ShapeNetVox32
 '''
 
 # ShapeNet Modified
-__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = '/home/jzw/work/pix2vox/datasets/KISTI.json'
+__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI.json'
 # __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH  = './datasets/PascalShapeNet.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
-__C.DATASETS.SHAPENET.RENDERING_VIEWS        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh/KISTI_Rendering/%s/%s/rendering/views.txt'
+__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
+__C.DATASETS.SHAPENET.RENDERING_VIEWS        = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Rendering/%s/%s/rendering/views.txt'
 # __C.DATASETS.SHAPENET.RENDERING_PATH      = '/home/hzxie/Datasets/ShapeNet/PascalShapeNetRendering/%s/%s/render_%04d.jpg'
-__C.DATASETS.SHAPENET.VOXEL_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh/KISTI_Vox32/%s/%s/model.binvox'
-__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh/KISTI_Vox32_BD/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32_BD/%s/%s/model.binvox'
 
 __C.DATASETS.PASCAL3D                       = edict()
 __C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'
@@ -88,7 +88,7 @@ __C.NETWORK.USE_MERGER                      = True
 #
 __C.TRAIN                                   = edict()
 __C.TRAIN.RESUME_TRAIN                      = False
-__C.TRAIN.NUM_WORKER                        = 8             # number of data workers
+__C.TRAIN.NUM_WORKER                        = 0             # number of data workers (default:8)
 __C.TRAIN.NUM_EPOCHES                       = 250
 __C.TRAIN.BRIGHTNESS                        = .4
 __C.TRAIN.CONTRAST                          = .8

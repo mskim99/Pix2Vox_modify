@@ -84,7 +84,7 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
 
         if suffix == '.mat':
             volume = scipy.io.loadmat(volume_path)
-            volume = volume['Volume'].astype(np.uint8)
+            volume = volume['volume'].astype(np.uint8)
         elif suffix == '.binvox':
             with open(volume_path, 'rb') as f:
                 volume = utils.binvox_rw.read_as_3d_array(f)
@@ -96,9 +96,9 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
 
         if suffix == '.mat':
             volume_mesh = scipy.io.loadmat(volume_mesh_path)
-            volume_mesh = volume_mesh['Volume'].astype(np.uint8)
+            volume_mesh = volume_mesh['volume_mesh'].astype(np.uint8)
         elif suffix == '.binvox':
-            with open(volume_path, 'rb') as f:
+            with open(volume_mesh_path, 'rb') as f:
                 volume_mesh = utils.binvox_rw.read_as_3d_array(f)
                 volume_mesh = volume_mesh.data.astype(np.uint8)
 

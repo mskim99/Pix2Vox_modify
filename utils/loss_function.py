@@ -41,21 +41,17 @@ def ls_loss(gv, gtv, thres, ep):
     loss_value = gc.sum()
     return loss_value
 
-def dice_loss(gv, gtv, thres_min, thres_max, weight, smooth = 1e-5):
-    gv_ref = gv
-    gtv_ref = gtv
-    gv_pos_min = torch.less(gv, thres_min)
-    gtv_pos_min = torch.less(gtv, thres_min)
-    gv_pos_max = torch.greater(gv, thres_max)
-    gtv_pos_max = torch.greater(gtv, thres_max)
-    gv_ref[gv_pos_min] = 0.0
-    gtv_ref[gtv_pos_min] = 0.0
-    gv_ref[gv_pos_max] = 0.0
-    gtv_ref[gtv_pos_max] = 0.0
-    intersection = torch.sum(gv_ref.mul(gtv_ref))
-    union = torch.sum(gv_ref.add(gtv_ref))
-    loss_iou = - weight * torch.log((intersection + smooth) / (union + smooth))
-    return loss_iou
+def dice_loss(gv, gtv, thres, smooth = 1e-5):
+    gv_ref_less = torch.le(gv, thres).float()
+    gv_ref_more = torch.le(gv, thres).float()
+    gtv_ref_less = torch.le(gtv, thres).float()
+    gtv_ref_more = torch.ge(gtv, thres).float()
+    FP_loss_intersection = torch.sum(gv_ref_less.mul(gtv_ref_more))
+    FP_loss_union = torch.sum(gv_ref_less.add(gtv_ref_more))
+    TN_loss_intersection = torch.sum(gv_ref_more.mul(gtv_ref_less))
+    TN_loss_union = torch.sum(gv_ref_more.add(gtv_ref_less))
+    dice_loss = FP_loss_intersection / (FP_loss_union + smooth) + TN_loss_intersection / (TN_loss_union + smooth)
+    return dice_loss
 
 def cal_bgtm_in(mahv_gv, gtv):
     im_data = torch.zeros(gtv.shape).cuda()
