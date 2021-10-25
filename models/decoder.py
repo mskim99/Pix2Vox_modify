@@ -61,8 +61,17 @@ class Decoder(torch.nn.Module):
             torch.nn.BatchNorm3d(32),
             torch.nn.ReLU()
         )
+        # For 32x32x32
+        '''
         self.layer4 = torch.nn.Sequential(
             torch.nn.ConvTranspose3d(32, 8, kernel_size=1, bias=cfg.NETWORK.TCONV_USE_BIAS),
+            torch.nn.BatchNorm3d(8),
+            torch.nn.ReLU()
+        )
+        '''
+        # For 64x64x64
+        self.layer4 = torch.nn.Sequential(
+            torch.nn.ConvTranspose3d(32, 8, kernel_size=4, stride=2, bias=cfg.NETWORK.TCONV_USE_BIAS, padding=1),
             torch.nn.BatchNorm3d(8),
             torch.nn.ReLU()
         )
@@ -79,22 +88,21 @@ class Decoder(torch.nn.Module):
 
         for features in image_features:
 
-            # For 32 resolution
             gen_volume = features.view(-1, 1024, 4, 4, 4)
-            # print(gen_volume.size())  # torch.Size([batch_size, 128, 8, 8, 8])
+            print(gen_volume.size())  # torch.Size([batch_size, 128, 8, 8, 8])
             gen_volume = self.layer1(gen_volume)
-            # print(gen_volume.size())   # torch.Size([batch_size, 64, 16, 16, 16])
+            print(gen_volume.size())   # torch.Size([batch_size, 64, 16, 16, 16])
             gen_volume = self.layer2(gen_volume)
-            # print(gen_volume.size())   # torch.Size([batch_size, 32, 32, 32, 32])
+            print(gen_volume.size())   # torch.Size([batch_size, 32, 32, 32, 32])
             gen_volume = self.layer3(gen_volume)
-            # print(gen_volume.size())  # torch.Size([batch_size, 32, 32, 32, 32])
+            print(gen_volume.size())  # torch.Size([batch_size, 32, 32, 32, 32])
             gen_volume = self.layer4(gen_volume)
             raw_feature = gen_volume
-            # print(gen_volume.size())   # # torch.Size([batch_size, 8, 32, 32, 32])
+            print(gen_volume.size())   # # torch.Size([batch_size, 8, 64, 64, 64])
             gen_volume = self.layer5(gen_volume)
-            # print(gen_volume.size())   # torch.Size([batch_size, 1, 32, 32, 32])
+            print(gen_volume.size())   # torch.Size([batch_size, 1, 64, 64, 64])
             raw_feature = torch.cat((raw_feature, gen_volume), dim=1)
-            # print(raw_feature.size())  # torch.Size([batch_size, 9, 32, 32, 32])
+            print(raw_feature.size())  # torch.Size([batch_size, 9, 64, 64, 64])
 
             # For 64 resolution
             '''

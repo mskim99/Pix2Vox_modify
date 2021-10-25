@@ -19,9 +19,10 @@ from datetime import datetime as dt
 from pprint import pprint
 
 from config import cfg
-from core.train import train_net
-from core.test import test_net
-
+# from core.train import train_net
+# from core.test import test_net
+from core.train_GAN import train_net
+from core.test_GAN import test_net
 
 def get_args_from_command_line():
     parser = ArgumentParser(description='Parser of Runner of Pix2Vox')
