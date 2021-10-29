@@ -6,7 +6,8 @@ import cv2
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-
+import sys
+# np.set_printoptions(threshold=sys.maxsize)
 from mpl_toolkits.mplot3d import Axes3D
 
 

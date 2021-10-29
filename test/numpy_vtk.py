@@ -32,8 +32,8 @@ for j in range (50, 150, 50):
     print(str(j) + ' index ended')
     '''
 
-for i in range (0, 18):
-    x_save_load = np.load('J:/Program/Pix2Vox-master/voxel_log/211024_2_ct_vol_e_pix2vox_test_m_BCE_15_v_dice_30_sc32_fill_lr_0_0001_epoch_375_%/gv_' + str(i).zfill(6) + '.npy')
+for i in range (0, 1):
+    x_save_load = np.load('J:/Program/Pix2Vox-master/voxel_log/211027_3_ct_vol_e_pix2vox_train_m_G_BCE_lr_1e-5_D_BCE_lr_1e-5_epoch_0_25/gv_' + str(i).zfill(6) + '.npy')
 
     imdata = vtk.vtkImageData()
 
@@ -45,10 +45,10 @@ for i in range (0, 18):
     imdata.SetOrigin([0, 0, 0])
     imdata.GetPointData().SetScalars(depthArray)
 
-    if not os.path.isdir('J:/Program/Pix2Vox-master/voxel_log/211024_2_ct_vol_e_pix2vox_test_m_BCE_15_v_dice_30_sc32_fill_lr_0_0001_epoch_375_mha_%'):
-        os.mkdir('J:/Program/Pix2Vox-master/voxel_log/211024_2_ct_vol_e_pix2vox_test_m_BCE_15_v_dice_30_sc32_fill_lr_0_0001_epoch_375_mha_%')
+    if not os.path.isdir('J:/Program/Pix2Vox-master/voxel_log/211027_3_ct_vol_e_pix2vox_train_m_G_BCE_lr_1e-5_D_BCE_lr_1e-5_epoch_0_25_mha'):
+        os.mkdir('J:/Program/Pix2Vox-master/voxel_log/211027_3_ct_vol_e_pix2vox_train_m_G_BCE_lr_1e-5_D_BCE_lr_1e-5_epoch_0_25_mha')
 
     writer = vtk.vtkMetaImageWriter()
-    writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/211024_2_ct_vol_e_pix2vox_test_m_BCE_15_v_dice_30_sc32_fill_lr_0_0001_epoch_375_mha_%/gv_' + str(i).zfill(6) + '.mha')
+    writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/211027_3_ct_vol_e_pix2vox_train_m_G_BCE_lr_1e-5_D_BCE_lr_1e-5_epoch_0_25_mha/gv_' + str(i).zfill(6) + '.mha')
     writer.SetInputData(imdata)
     writer.Write()

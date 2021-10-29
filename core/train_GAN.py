@@ -9,6 +9,7 @@ import torch.backends.cudnn
 import torch.utils.data
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
+from torch.autograd import Variable
 
 import utils.binvox_visualization
 import utils.data_loaders
@@ -20,12 +21,15 @@ from datetime import datetime as dt
 from tensorboardX import SummaryWriter
 from time import time
 
-from core.test import test_net
-from models.generator import Generator
+from core.test_GAN import test_net
+from models.encoder_GAN import Encoder
+from models.decoder_GAN import Decoder
 from models.discriminator import Discriminator
 
 import numpy as np
-
+import sys
+np.set_printoptions(threshold=sys.maxsize)
+import itertools
 import cv2
 
 def train_net(cfg):
@@ -70,36 +74,49 @@ def train_net(cfg):
                                                   shuffle=False)
 
     # Set up networks
-    generator = Generator(cfg)
+    encoder = Encoder(cfg)
+    decoder = Decoder(cfg)
     discriminator = Discriminator(cfg)
-    print('[DEBUG] %s Parameters in Encoder: %d.' % (dt.now(), utils.network_utils_GAN.count_parameters(generator)))
-    print('[DEBUG] %s Parameters in Decoder: %d.' % (dt.now(), utils.network_utils_GAN.count_parameters(discriminator)))
+    print('[DEBUG] %s Parameters in Encoder : %d.' % (dt.now(), utils.network_utils_GAN.count_parameters(encoder)))
+    print('[DEBUG] %s Parameters in Decoder : %d.' % (dt.now(), utils.network_utils_GAN.count_parameters(decoder)))
+    print('[DEBUG] %s Parameters in Discriminator: %d.' % (dt.now(), utils.network_utils_GAN.count_parameters(discriminator)))
 
     # Initialize weights of networks
-    generator.apply(utils.network_utils_GAN.init_weights)
+    encoder.apply(utils.network_utils_GAN.init_weights)
+    decoder.apply(utils.network_utils_GAN.init_weights)
     discriminator.apply(utils.network_utils_GAN.init_weights)
 
     # Set up solver
     if cfg.TRAIN.POLICY == 'adam':
-        generator_solver = torch.optim.Adam(filter(lambda p: p.requires_grad, generator.parameters()),
+        encoder_solver = torch.optim.Adam(filter(lambda p: p.requires_grad, encoder.parameters()),
                                           lr=cfg.TRAIN.ENCODER_LEARNING_RATE,
-                                          betas=cfg.TRAIN.BETAS
-                                          , weight_decay=0.2
+                                          betas=cfg.TRAIN.BETAS,
+                                          weight_decay=0.2
                                           )
+        decoder_solver = torch.optim.Adam(filter(lambda p: p.requires_grad, decoder.parameters()),
+                                                 lr=cfg.TRAIN.DECODER_LEARNING_RATE,
+                                                 betas=cfg.TRAIN.BETAS,
+                                                 weight_decay=0.2
+                                                 )
         discriminator_solver = torch.optim.Adam(filter(lambda p: p.requires_grad, discriminator.parameters()),
-                                            lr=cfg.TRAIN.ENCODER_LEARNING_RATE,
-                                            betas=cfg.TRAIN.BETAS
-                                            , weight_decay=0.2
+                                            lr=cfg.TRAIN.REFINER_LEARNING_RATE,
+                                            betas=cfg.TRAIN.BETAS,
+                                            weight_decay=0.2
                                             )
 
     elif cfg.TRAIN.POLICY == 'sgd':
-        generator_solver = torch.optim.SGD(filter(lambda p: p.requires_grad, generator.parameters()),
+        encoder_solver = torch.optim.SGD(filter(lambda p: p.requires_grad, encoder.parameters()),
                                          lr=cfg.TRAIN.ENCODER_LEARNING_RATE,
-                                         momentum=cfg.TRAIN.MOMENTUM
-                                         , weight_decay=0.2
+                                         momentum=cfg.TRAIN.MOMENTUM,
+                                         weight_decay=0.2
                                          )
+        decoder_solver = torch.optim.SGD(filter(lambda p: p.requires_grad, decoder.parameters()),
+                                                lr=cfg.TRAIN.DECODER_LEARNING_RATE,
+                                                momentum=cfg.TRAIN.MOMENTUM,
+                                                weight_decay=0.2
+                                                )
         discriminator_solver = torch.optim.SGD(filter(lambda p: p.requires_grad, discriminator.parameters()),
-                                         lr=cfg.TRAIN.ENCODER_LEARNING_RATE,
+                                         lr=cfg.TRAIN.REFINER_LEARNING_RATE,
                                          momentum=cfg.TRAIN.MOMENTUM
                                          , weight_decay=0.2
                                          )
@@ -107,11 +124,14 @@ def train_net(cfg):
         raise Exception('[FATAL] %s Unknown optimizer %s.' % (dt.now(), cfg.TRAIN.POLICY))
 
     # Set up learning rate scheduler to decay learning rates dynamically
-    generator_lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(generator_solver,
+    encoder_lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(encoder_solver,
                                                                 milestones=cfg.TRAIN.ENCODER_LR_MILESTONES,
                                                                 gamma=cfg.TRAIN.GAMMA)
+    decoder_lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(decoder_solver,
+                                                                       milestones=cfg.TRAIN.DECODER_LR_MILESTONES,
+                                                                       gamma=cfg.TRAIN.GAMMA)
     discriminator_lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(discriminator_solver,
-                                                                milestones=cfg.TRAIN.DECODER_LR_MILESTONES,
+                                                                milestones=cfg.TRAIN.REFINER_LR_MILESTONES,
                                                                 gamma=cfg.TRAIN.GAMMA)
 
     '''
@@ -120,11 +140,12 @@ def train_net(cfg):
     dist.init_process_group(backend='nccl', rank=1, world_size=2, init_method='env://')
     '''
     if torch.cuda.is_available():
-        generator = torch.nn.DataParallel(generator, device_ids=[0, 1]).cuda()
+        generator_real = torch.nn.DataParallel(encoder, device_ids=[0, 1]).cuda()
+        generator_fake = torch.nn.DataParallel(decoder, device_ids=[0, 1]).cuda()
         discriminator = torch.nn.DataParallel(discriminator, device_ids=[0, 1]).cuda()
 
     # Set up loss functions
-    bce_loss = torch.nn.BCELoss()
+    bce_loss = torch.nn.BCEWithLogitsLoss()
     # ce_loss = torch.nn.CrossEntropyLoss()
     mse_loss = torch.nn.MSELoss()
     l1_loss = torch.nn.L1Loss()
@@ -143,7 +164,8 @@ def train_net(cfg):
         best_iou = checkpoint['best_iou']
         best_epoch = checkpoint['best_epoch']
 
-        generator.load_state_dict(checkpoint['generator_state_dict'])
+        encoder.load_state_dict(checkpoint['encoder_state_dict'])
+        decoder.load_state_dict(checkpoint['decoder_state_dict'])
         discriminator.load_state_dict(checkpoint['discriminator_state_dict'])
 
         print('[INFO] %s Recover complete. Current epoch #%d, Best IoU = %.4f at epoch #%d.' %
@@ -167,10 +189,12 @@ def train_net(cfg):
         batch_time = utils.network_utils_GAN.AverageMeter()
         data_time = utils.network_utils_GAN.AverageMeter()
         generator_losses = utils.network_utils_GAN.AverageMeter()
+        # generator_fake_losses = utils.network_utils_GAN.AverageMeter()
         discriminator_losses = utils.network_utils_GAN.AverageMeter()
 
         # switch models to training mode
-        generator.train()
+        encoder.train()
+        decoder.train()
         discriminator.train()
 
         batch_end_time = time()
@@ -181,50 +205,89 @@ def train_net(cfg):
             data_time.update(time() - batch_end_time)
 
             # Get random volume excepth matches to batch index
-            r = range(0, batch_idx) + range(batch_idx + 1, n_batches)
+            '''
+            r = list(itertools.chain(range(0, batch_idx), range(batch_idx + 1, n_batches)))
             fake_idx = random.choice(r)
-            fake_volume = ground_truth_volumes[fake_idx]
+            fake_volumes = train_data_loader.dataset[fake_idx][3]
+            fake_volumes = torch.tensor(fake_volumes)
+            '''
 
             # Get data from data loader
             ground_truth_volumes = utils.network_utils_GAN.var_or_cuda(ground_truth_volumes)
+            # fake_volumes = utils.network_utils_GAN.var_or_cuda(fake_volumes)
             # ground_truth_volumes_mesh = utils.network_utils_GAN.var_or_cuda(ground_truth_volumes_mesh)
             rendering_images = utils.network_utils_GAN.var_or_cuda(rendering_images)
 
             ground_truth_volumes = ground_truth_volumes.float() / 255.
+            ground_truth_volumes = torch.clamp(ground_truth_volumes, 0.0, 1.0)
+            # fake_volumes = fake_volumes.float() / 255.
 
             # Train Generator
-            generator.zero_grad()
+            ground_truth_volumes = torch.squeeze(ground_truth_volumes)
 
-            fake_images = torch.rand(1, 3, 112, 112, 112)
-            gen_volumes = generator(fake_images)
+            # fake_code = torch.rand(512, 4, 4, 4)
+            '''
+            fake_code = Variable(torch.Tensor(np.random.normal(0, 1, (512, 4, 4, 4))))
+            fake_code = utils.network_utils_GAN.var_or_cuda(fake_code)
+            gen_fake_volumes = decoder(fake_code)
+            gen_fake_volumes = gen_fake_volumes.float()
+            gen_fake_volumes = torch.squeeze(gen_fake_volumes)
+
+            generator_loss_fake = bce_loss(gen_fake_volumes, ground_truth_volumes)
+            '''
+            # rendering_images = rendering_images / 255.
+            code = encoder(rendering_images)
+            gen_volumes = decoder(code)
             gen_volumes = gen_volumes.float()
-            generator_loss = mse_loss(gen_volumes, ground_truth_volumes)
-
-            generator_loss.backward()
-            generator_solver.step()
+            gen_volumes = torch.squeeze(gen_volumes)
+            generator_loss = bce_loss(gen_volumes, ground_truth_volumes)
 
             # Train Discriminator
-            discriminator.zero_grad()
+            ground_truth_volumes = torch.unsqueeze(ground_truth_volumes, 0)
+            # gen_fake_volumes = torch.unsqueeze(gen_fake_volumes, 0)
+            gen_volumes = torch.unsqueeze(gen_volumes, 0)
+            # fake_volumes = torch.unsqueeze(fake_volumes, 0)
 
-            # real data generator
-            real_outputs = generator(rendering_images)
-            d_loss_real = bce_loss(real_outputs, ground_truth_volumes)
-            d_loss_fake = bce_loss(gen_volumes, fake_volume)
+            gr_output = discriminator(gen_volumes)
+            # gf_output = discriminator(gen_fake_volumes)
+
+            with torch.no_grad():
+                gtr_output = discriminator(ground_truth_volumes)
+                # gtf_output = discriminator(fake_volumes)
+
+            valid = Variable(torch.Tensor(gtr_output.size(0)).fill_(1.0), requires_grad=False)
+            fake = Variable(torch.Tensor(gtr_output.size(0)).fill_(0.0), requires_grad=False)
+            valid = utils.network_utils_GAN.var_or_cuda(valid)
+            fake = utils.network_utils_GAN.var_or_cuda(fake)
+
+            d_loss_real = bce_loss(gtr_output, valid)
+            d_loss_fake = bce_loss(gr_output, fake)
 
             # discriminator loss
             discriminator_loss = (d_loss_real + d_loss_fake) / 2.
 
+            encoder.zero_grad()
+            decoder.zero_grad()
+            discriminator.zero_grad()
+
+            generator_loss.backward(retain_graph=True)
+            # generator_loss_fake.backward(retain_graph=True)
             discriminator_loss.backward()
+
+            encoder_solver.step()
+            decoder_solver.step()
             discriminator_solver.step()
 
             # Append loss to average metrics
             generator_losses.update(generator_loss.item())
+            # generator_fake_losses.update(generator_loss_fake.item())
             discriminator_losses.update(discriminator_loss.item())
 
             # Append loss to TensorBoard
             n_itr = epoch_idx * n_batches + batch_idx
-            train_writer.add_scalar('EncoderDecoder/BatchLoss', generator_loss.item(), n_itr)
-            train_writer.add_scalar('Refiner/BatchLoss', discriminator_loss.item(), n_itr)
+            train_writer.add_scalar('Generator/BatchLoss', generator_loss.item(), n_itr)
+            # train_writer.add_scalar('Generator_fake/BatchLoss', generator_loss_fake.item(), n_itr)
+            train_writer.add_scalar('Discriminator/BatchLoss', discriminator_loss.item(), n_itr)
 
             # Tick / tock
             batch_time.update(time() - batch_end_time)
@@ -235,17 +298,19 @@ def train_net(cfg):
                    data_time.val, generator_loss.item(), discriminator_loss.item()))
 
         # Append epoch loss to TensorBoard
-        train_writer.add_scalar('EncoderDecoder/EpochLoss', generator_losses.avg, epoch_idx + 1)
-        train_writer.add_scalar('Refiner/EpochLoss', discriminator_losses.avg, epoch_idx + 1)
+        train_writer.add_scalar('Generator/EpochLoss', generator_losses.avg, epoch_idx + 1)
+        train_writer.add_scalar('Discriminator/EpochLoss', discriminator_losses.avg, epoch_idx + 1)
 
         # Adjust learning rate
-        generator_lr_scheduler.step()
+        encoder_lr_scheduler.step()
+        decoder_lr_scheduler.step()
         discriminator_lr_scheduler.step()
 
         # Tick / tock
         epoch_end_time = time()
         print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) GLoss = %.4f DLoss = %.4f' %
-              (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, epoch_end_time - epoch_start_time, generator_losses.avg, discriminator_losses.avg))
+              (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, epoch_end_time - epoch_start_time,
+               generator_losses.avg, discriminator_losses.avg))
 
         # Update Rendering Views
         if cfg.TRAIN.UPDATE_N_VIEWS_RENDERING:
@@ -255,7 +320,7 @@ def train_net(cfg):
                   (dt.now(), epoch_idx + 2, cfg.TRAIN.NUM_EPOCHES, n_views_rendering))
 
         # Validate the training models
-        iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, generator, discriminator)
+        iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, discriminator)
         # encoder_loss = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger)
 
         # Save weights to file
@@ -263,8 +328,9 @@ def train_net(cfg):
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils_GAN.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
-                                                 epoch_idx + 1, generator, generator_solver, discriminator, discriminator_solver,
+            utils.network_utils_GAN.save_checkpoints(cfg, './output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+                                                 epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
+                                                 discriminator, discriminator_solver,
                                                  best_iou, best_epoch)
 
         # if iou > best_iou:
@@ -275,8 +341,10 @@ def train_net(cfg):
             best_iou = iou
             # best_loss = encoder_loss
             best_epoch = epoch_idx + 1
-            utils.network_utils_GAN.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints/best-ckpt.pth', epoch_idx + 1, generator,
-                                                 generator_solver, discriminator, discriminator_solver, best_iou, best_epoch)
+            utils.network_utils_GAN.save_checkpoints(cfg, './output/logs/checkpoints/best-ckpt.pth',
+                                                     epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
+                                                     discriminator, discriminator_solver,
+                                                     best_iou, best_epoch)
 
             print('[INFO] %s Best epoch [%d] / Best IoU [%.4f]' % (dt.now(), best_epoch, best_iou))
             # print('[INFO] %s Best epoch [%d] / Best Loss [%.4f]' % (dt.now(), best_epoch, best_loss))

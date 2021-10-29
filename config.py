@@ -22,12 +22,19 @@ __C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/Shapenet/ShapeNetRende
 __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/Shapenet/ShapeNetVox32/%s/%s/model.binvox'
 '''
 
-# ShapeNet Modified
+# ShapeNet Modified (jzw)
+'''
+__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = '/home/jzw/work/pix2vox/datasets/KISTI.json'
+__C.DATASETS.SHAPENET.RENDERING_PATH        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
+__C.DATASETS.SHAPENET.RENDERING_VIEWS        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Rendering/%s/%s/rendering/views.txt'
+__C.DATASETS.SHAPENET.VOXEL_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32_BD/%s/%s/model.binvox'
+'''
+
+# ShapeNet Modified (AI Server)
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI.json'
-# __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH  = './datasets/PascalShapeNet.json'
 __C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
 __C.DATASETS.SHAPENET.RENDERING_VIEWS        = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Rendering/%s/%s/rendering/views.txt'
-# __C.DATASETS.SHAPENET.RENDERING_PATH      = '/home/hzxie/Datasets/ShapeNet/PascalShapeNetRendering/%s/%s/render_%04d.jpg'
 __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32/%s/%s/model.binvox'
 __C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32_BD/%s/%s/model.binvox'
 
@@ -98,10 +105,10 @@ __C.TRAIN.RANDOM_BG_COLOR_RANGE             = [[225, 255], [225, 255], [225, 255
 __C.TRAIN.POLICY                            = 'adam'        # available options: sgd, adam
 __C.TRAIN.EPOCH_START_USE_REFINER           = 0
 __C.TRAIN.EPOCH_START_USE_MERGER            = 0
-__C.TRAIN.ENCODER_LEARNING_RATE             = 1e-4
-__C.TRAIN.DECODER_LEARNING_RATE             = 1e-4
-__C.TRAIN.REFINER_LEARNING_RATE             = 1e-4
-__C.TRAIN.MERGER_LEARNING_RATE              = 1e-4
+__C.TRAIN.ENCODER_LEARNING_RATE             = 1e-5
+__C.TRAIN.DECODER_LEARNING_RATE             = 1e-6
+__C.TRAIN.REFINER_LEARNING_RATE             = 1e-5
+__C.TRAIN.MERGER_LEARNING_RATE              = 1e-5
 __C.TRAIN.ENCODER_LR_MILESTONES             = [150]
 __C.TRAIN.DECODER_LR_MILESTONES             = [150]
 __C.TRAIN.REFINER_LR_MILESTONES             = [150]

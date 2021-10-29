@@ -5,9 +5,9 @@ import math
 import cv2
 np.set_printoptions(threshold=sys.maxsize)
 
-with open('J:/DK_Data_Process/i_1-3_Target_Mesh/24_spine/res_32_rot_yx_90_prc_sc_fill_good/f_036_vrt_24.binvox', 'rb') as f:
+with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x2/gtv_f_0000001_a.binvox', 'rb') as f:
     model = binvox_rw.read_as_3d_array(f)
-
+'''
 data = model.data
 
 x_len = -1
@@ -36,11 +36,11 @@ def cal_bb(type):
         return -1
 
     return 32
-
+'''
 data = model.data
 for i in range(0, 31):
     for j in range(0, 31):
-        sys.stdout.write(str(math.ceil(data[12, i, j] / 255.)))
+        sys.stdout.write(str(math.ceil(data[12, i, j])))
         sys.stdout.write(' ')
     print('')
 print('')

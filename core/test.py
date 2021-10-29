@@ -14,6 +14,7 @@ import utils.binvox_rw
 import utils.data_loaders
 import utils.data_transforms
 import utils.network_utils
+import utils.extract_amplify_features as uaf
 
 from datetime import datetime as dt
 
@@ -112,6 +113,15 @@ def test_net(cfg,
     refiner.eval()
     merger.eval()
 
+    # Calculate ground truth volumes thresholding
+    ground_truth_volumes_thres_test = torch.zeros([len(test_data_loader), 1, 32, 32, 32])
+    for sample_idx, (taxonomy_id, sample_name, rendering_images, ground_truth_volume, ground_truth_volume_mesh) in enumerate(test_data_loader):
+
+        ground_truth_volume = ground_truth_volume.float() / 255.
+        ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volume, 0.35, 32)
+        ground_truth_volumes_thres_test[sample_idx] = ground_truth_volume_thres
+    ground_truth_volumes_thres_test = utils.network_utils.var_or_cuda(ground_truth_volumes_thres_test)
+
     vol_write_idx = 0
     min_loss = 10000000.0
     for sample_idx, (taxonomy_id, sample_name, rendering_images, ground_truth_volume, ground_truth_volume_mesh) in enumerate(test_data_loader):
@@ -122,7 +132,7 @@ def test_net(cfg,
             # Get data from data loader
             rendering_images = utils.network_utils.var_or_cuda(rendering_images)
             ground_truth_volume = utils.network_utils.var_or_cuda(ground_truth_volume)
-            ground_truth_volume_mesh = utils.network_utils.var_or_cuda(ground_truth_volume_mesh)
+            # ground_truth_volume_mesh = utils.network_utils.var_or_cuda(ground_truth_volume_mesh)
 
             # Test the encoder, decoder, refiner and merger
             image_features = encoder(rendering_images)
@@ -135,7 +145,8 @@ def test_net(cfg,
 
             generated_volume = generated_volume.float()
             ground_truth_volume = ground_truth_volume.float() / 255.
-            ground_truth_volume_mesh = ground_truth_volume_mesh.float() / 255.
+            # ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volume, 0.35, 32)
+            # ground_truth_volume_mesh = ground_truth_volume_mesh.float() / 255.
 
             # Set target for Cross Entropy Loss (4 classes)
             # 1 : 0 ~ 73 / 2 : 73 ~ 81, 3 : 81 ~ 97, 4 : 97 ~ 255
@@ -176,7 +187,7 @@ def test_net(cfg,
             gtv_mse_loss = mse_loss(generated_volume, ground_truth_volume) * 150.
             gtv_dice_loss = utils.loss_function.dice_loss(generated_volume, ground_truth_volume, 0.4) * 30.
             gtv_loss = gtv_dice_loss
-            gtvm_loss = bce_loss(generated_volume, ground_truth_volume_mesh) * 30.
+            gtvm_loss = bce_loss(generated_volume, ground_truth_volumes_thres_test[sample_idx]) * 30.
             encoder_loss = (gtvm_loss + gtv_loss) * 0.5
 
             '''
@@ -214,7 +225,7 @@ def test_net(cfg,
             sample_iou = []
             for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(generated_volume, th).float()
-                _gt_volume = torch.ge(ground_truth_volume_mesh, th).float()
+                _gt_volume = torch.ge(ground_truth_volume, th).float()
                 intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
                 union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
                 sample_iou.append((intersection / union).item())
@@ -231,19 +242,19 @@ def test_net(cfg,
                 # Volume Visualization
                 gv = generated_volume.cpu().numpy()
 
-                rendering_views = utils.binvox_visualization.get_volume_views(gv, './output/image/test/gv',
+                rendering_views = utils.binvox_visualization.get_volume_views(gv, '/home/jzw/work/pix2vox/output/image/test/gv',
                                                                               epoch_idx)
                 # print(np.shape(rendering_views))
                 # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
                 # test_writer.add_image('Test Sample#%02d/Volume Reconstructed' % sample_idx, rendering_views_im, epoch_idx)
-                gtvm = ground_truth_volume_mesh.cpu().numpy()
-                rendering_views = utils.binvox_visualization.get_volume_views(gtvm, './output/image/test/gtvm',
+                gtvm = ground_truth_volume_thres.cpu().numpy()
+                rendering_views = utils.binvox_visualization.get_volume_views(gtvm, '/home/jzw/work/pix2vox/output/image/test/gtvm',
                                                                               epoch_idx)
                 # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
                 # test_writer.add_image('Test Sample#%02d/Volume GroundTruth' % sample_idx, rendering_views_im, epoch_idx)
                 gtv = ground_truth_volume.cpu().numpy()
                 rendering_views = utils.binvox_visualization.get_volume_views(gtv,
-                                                                              './output/image/test/gtv',
+                                                                              '/home/jzw/work/pix2vox/output/image/test/gtv',
                                                                               epoch_idx)
 
             # Print sample loss('IoU = %s' removed)

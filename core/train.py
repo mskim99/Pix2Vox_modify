@@ -15,6 +15,7 @@ import utils.data_loaders
 import utils.data_transforms
 import utils.network_utils
 import utils.loss_function
+import utils.extract_amplify_features as uaf
 
 from datetime import datetime as dt
 from tensorboardX import SummaryWriter
@@ -196,6 +197,16 @@ def train_net(cfg):
     train_writer = SummaryWriter('./output/logs/train')
     val_writer = SummaryWriter('./output/logs/test')
 
+    # Calculate ground truth volumes thresholding
+    ground_truth_volumes_thres = torch.zeros([len(train_data_loader), 1, 32, 32, 32])
+    for batch_idx, (taxonomy_names, sample_names, rendering_images,
+                    ground_truth_volumes, ground_truth_volumes_mesh) in enumerate(train_data_loader):
+
+        ground_truth_volumes = ground_truth_volumes.float() / 255.
+        ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volumes, 0.35, 32)
+        ground_truth_volumes_thres[batch_idx] = ground_truth_volume_thres
+    ground_truth_volumes_thres = utils.network_utils.var_or_cuda(ground_truth_volumes_thres)
+
     # Training loop
     for epoch_idx in range(init_epoch, cfg.TRAIN.NUM_EPOCHES):
         # Tick / tock
@@ -222,29 +233,15 @@ def train_net(cfg):
         # print('[DEBUG]  Start Measurement...')
         batch_end_time = time()
         n_batches = len(train_data_loader)
+
         for batch_idx, (taxonomy_names, sample_names, rendering_images,
                         ground_truth_volumes, ground_truth_volumes_mesh) in enumerate(train_data_loader):
             # Measure data time
             data_time.update(time() - batch_end_time)
 
-            # Create Ground truth volume using Axis of CT Volume
-            '''
-            ground_truth_volumes = rendering_images[0]
-
-            ground_truth_volumes = ground_truth_volumes[0, :, :, :, 0]
-            ground_truth_volumes = np.resize(ground_truth_volumes, [1, 32, 32, 32])
-            ground_truth_volumes = torch.Tensor(ground_truth_volumes)
-            ground_truth_volumes = utils.network_utils.var_or_cuda(ground_truth_volumes)
-
-            # For debugging
-            gtv_arr = ground_truth_volumes.cpu().numpy()
-            gtv_arr = gtv_arr[0, :, :, :]
-
-            np.save('/home/jzw/work/pix2vox/output/voxel/gtv_log/Pix2Vox-masterf_' + str(batch_idx) + '_a', gtv_arr)
-            '''
             # Get data from data loader
             ground_truth_volumes = utils.network_utils.var_or_cuda(ground_truth_volumes)
-            ground_truth_volumes_mesh = utils.network_utils.var_or_cuda(ground_truth_volumes_mesh)
+            # ground_truth_volumes_mesh = utils.network_utils.var_or_cuda(ground_truth_volumes_mesh)
             rendering_images = utils.network_utils.var_or_cuda(rendering_images)
 
             # Train the encoder, decoder, refiner, and merger
@@ -258,7 +255,8 @@ def train_net(cfg):
 
             generated_volumes = generated_volumes.float()
             ground_truth_volumes = ground_truth_volumes.float() / 255.
-            ground_truth_volumes_mesh = ground_truth_volumes_mesh.float() / 255.
+            # ground_truth_volumes_thres = uaf.Extract_Amplify_Features(ground_truth_volumes, 0.35, 32)
+            # ground_truth_volumes_mesh = ground_truth_volumes_mesh.float() / 255.
 
             # Set target for Cross Entropy Loss (4 classes)
             # 1 : 0 ~ 73 / 2 : 73 ~ 81, 3 : 81 ~ 97, 4 : 97 ~ 255
@@ -299,7 +297,7 @@ def train_net(cfg):
             gtv_mse_loss = mse_loss(generated_volumes, ground_truth_volumes) * 150.
             gtv_dice_loss = utils.loss_function.dice_loss(generated_volumes, ground_truth_volumes, 0.4) * 30.
             gtv_loss = gtv_dice_loss
-            gtvm_loss = bce_loss(generated_volumes, ground_truth_volumes_mesh) * 30.
+            gtvm_loss = bce_loss(generated_volumes, ground_truth_volumes_thres[batch_idx]) * 30.
             encoder_loss = (gtvm_loss + gtv_loss) * 0.5
 
             '''
