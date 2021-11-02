@@ -114,12 +114,32 @@ def test_net(cfg,
     merger.eval()
 
     # Calculate ground truth volumes thresholding
-    ground_truth_volumes_thres_test = torch.zeros([len(test_data_loader), 1, 32, 32, 32])
+    ground_truth_volumes_thres_test = torch.zeros([len(test_data_loader), 1, 64, 64, 64])
     for sample_idx, (taxonomy_id, sample_name, rendering_images, ground_truth_volume, ground_truth_volume_mesh) in enumerate(test_data_loader):
 
         ground_truth_volume = ground_truth_volume.float() / 255.
-        ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volume, 0.35, 32)
+        ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volume, 0.29, 64)
         ground_truth_volumes_thres_test[sample_idx] = ground_truth_volume_thres
+
+        gtv = ground_truth_volume.cpu().numpy()
+        gtvt = ground_truth_volume_thres.cpu().numpy()
+
+        if output_dir and sample_idx == 0:
+            np.save('/home/jzw/work/pix2vox/output/voxel/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
+            np.save('/home/jzw/work/pix2vox/output/voxel/gtvt/gtvt_' + str(epoch_idx).zfill(6) + '.npy', gtvt)
+
+            '''
+            if epoch_idx % 25 == 0:
+                gtvm = ground_truth_volume_thres.cpu().numpy()
+                rendering_views = utils.binvox_visualization.get_volume_views(gtvm,
+                                                                              '/home/jzw/work/pix2vox/output/image/test/gtvm',
+                                                                              epoch_idx)
+                gtv = ground_truth_volume.cpu().numpy()
+                rendering_views = utils.binvox_visualization.get_volume_views(gtv,
+                                                                              '/home/jzw/work/pix2vox/output/image/test/gtv',
+                                                                              epoch_idx)
+                                                                              '''
+
     ground_truth_volumes_thres_test = utils.network_utils.var_or_cuda(ground_truth_volumes_thres_test)
 
     vol_write_idx = 0
@@ -213,10 +233,12 @@ def test_net(cfg,
             refiner_losses.update(refiner_loss.item())
 
             # Volume Visualization
-            '''
             gv = generated_volume.cpu().numpy()
+            '''
             rendering_views = utils.binvox_visualization.get_volume_views(gv, '/home/jzw/work/pix2vox/output/image/test/gv',
                                                         vol_write_idx)
+                                                        '''
+            '''
             np.save('/home/jzw/work/pix2vox/output/voxel/gv/gv_' + str(vol_write_idx).zfill(6) + '.npy', gv)
             vol_write_idx = vol_write_idx + 1
             '''
@@ -237,25 +259,31 @@ def test_net(cfg,
             test_iou[taxonomy_id]['iou'].append(sample_iou)
 
             # Append generated volumes to TensorBoard
-            if output_dir and sample_idx < 3:
-                img_dir = output_dir % 'images'
+            if output_dir and sample_idx == 0:
+                # img_dir = output_dir % 'images'
                 # Volume Visualization
                 gv = generated_volume.cpu().numpy()
+                np.save('/home/jzw/work/pix2vox/output/voxel/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
 
-                rendering_views = utils.binvox_visualization.get_volume_views(gv, '/home/jzw/work/pix2vox/output/image/test/gv',
-                                                                              epoch_idx)
-                # print(np.shape(rendering_views))
-                # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
-                # test_writer.add_image('Test Sample#%02d/Volume Reconstructed' % sample_idx, rendering_views_im, epoch_idx)
-                gtvm = ground_truth_volume_thres.cpu().numpy()
-                rendering_views = utils.binvox_visualization.get_volume_views(gtvm, '/home/jzw/work/pix2vox/output/image/test/gtvm',
-                                                                              epoch_idx)
-                # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
-                # test_writer.add_image('Test Sample#%02d/Volume GroundTruth' % sample_idx, rendering_views_im, epoch_idx)
-                gtv = ground_truth_volume.cpu().numpy()
-                rendering_views = utils.binvox_visualization.get_volume_views(gtv,
-                                                                              '/home/jzw/work/pix2vox/output/image/test/gtv',
-                                                                              epoch_idx)
+                '''
+                if epoch_idx % 25 == 0:
+                    
+                    rendering_views = utils.binvox_visualization.get_volume_views(gv, '/home/jzw/work/pix2vox/output/image/test/gv',
+                                                                                  epoch_idx)
+                    
+                    # print(np.shape(rendering_views))
+                    # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
+                    # test_writer.add_image('Test Sample#%02d/Volume Reconstructed' % sample_idx, rendering_views_im, epoch_idx)
+                    gtvm = ground_truth_volume_thres.cpu().numpy()
+                    rendering_views = utils.binvox_visualization.get_volume_views(gtvm, '/home/jzw/work/pix2vox/output/image/test/gtvm',
+                                                                                  epoch_idx)
+                    # rendering_views_im = np.array((rendering_views * 255), dtype=np.uint8)
+                    # test_writer.add_image('Test Sample#%02d/Volume GroundTruth' % sample_idx, rendering_views_im, epoch_idx)
+                    gtv = ground_truth_volume.cpu().numpy()
+                    rendering_views = utils.binvox_visualization.get_volume_views(gtv,
+                                                                                  '/home/jzw/work/pix2vox/output/image/test/gtv',
+                                                                                  epoch_idx)
+                                                                                  '''
 
             # Print sample loss('IoU = %s' removed)
             print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s V_L1Loss = %.4f V_DLoss = %.4f VLoss = %.4f MLoss = %.4f EDLoss = %.4f'

@@ -28,6 +28,8 @@ import cv2
 import itertools
 from PIL import Image
 
+import utils.extract_amplify_features as uaf
+
 def test_net(cfg,
              epoch_idx=-1,
              output_dir=None,
@@ -120,9 +122,10 @@ def test_net(cfg,
             # fake_volumes = fake_volumes.float() / 255.
 
             # Train Generator
+            ground_truth_volumes = uaf.Extract_Amplify_Features(ground_truth_volumes, 0.35, 32)
             ground_truth_volumes = torch.squeeze(ground_truth_volumes)
             '''
-            fake_code = torch.rand(512, 4, 4, 4)
+            
             fake_code = utils.network_utils_GAN.var_or_cuda(fake_code)
             gen_fake_volumes = decoder(fake_code)
             gen_fake_volumes = gen_fake_volumes.float()
@@ -130,6 +133,7 @@ def test_net(cfg,
 
             generator_loss_fake = bce_loss(gen_fake_volumes, ground_truth_volumes)
             '''
+            # real_code = torch.rand(512, 4, 4, 4)
             real_code = encoder(rendering_images)
             gen_real_volumes = decoder(real_code)
             gen_real_volumes = gen_real_volumes.float()

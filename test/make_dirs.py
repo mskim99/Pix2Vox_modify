@@ -21,8 +21,8 @@ for i in range (1, 58):
 '''
 
 for i in range (1, 58):
-    os.mkdir('J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32_BD/00000024/m_' + str(i).zfill(7))
-    os.mkdir('J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32_BD/00000024/f_' + str(i).zfill(7))
+    os.mkdir('J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume_CT_mesh_sc64_fill/KISTI_Vox/00000024/m_' + str(i).zfill(7))
+    os.mkdir('J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume_CT_mesh_sc64_fill/KISTI_Vox/00000024/f_' + str(i).zfill(7))
 
 '''
 for i in range (1, 56):

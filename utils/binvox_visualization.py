@@ -15,7 +15,7 @@ def get_volume_views(volume, save_dir, n_itr):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    volume = volume.squeeze().__ge__(0.4)
+    volume = volume.squeeze().__ge__(0.1)
     fig = plt.figure()
     ax = fig.gca(projection=Axes3D.name)
     ax.set_aspect('auto')

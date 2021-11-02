@@ -5,7 +5,7 @@ import math
 import cv2
 np.set_printoptions(threshold=sys.maxsize)
 
-with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x2/gtv_f_0000001_a.binvox', 'rb') as f:
+with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x2/gtv_f_0000001_a_cv.binvox', 'rb') as f:
     model = binvox_rw.read_as_3d_array(f)
 '''
 data = model.data

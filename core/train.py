@@ -198,12 +198,12 @@ def train_net(cfg):
     val_writer = SummaryWriter('./output/logs/test')
 
     # Calculate ground truth volumes thresholding
-    ground_truth_volumes_thres = torch.zeros([len(train_data_loader), 1, 32, 32, 32])
+    ground_truth_volumes_thres = torch.zeros([len(train_data_loader), 1, 64, 64, 64])
     for batch_idx, (taxonomy_names, sample_names, rendering_images,
                     ground_truth_volumes, ground_truth_volumes_mesh) in enumerate(train_data_loader):
 
         ground_truth_volumes = ground_truth_volumes.float() / 255.
-        ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volumes, 0.35, 32)
+        ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volumes, 0.29, 64)
         ground_truth_volumes_thres[batch_idx] = ground_truth_volume_thres
     ground_truth_volumes_thres = utils.network_utils.var_or_cuda(ground_truth_volumes_thres)
 
