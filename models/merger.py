@@ -44,21 +44,21 @@ class Merger(torch.nn.Module):
 
         for i in range(n_views_rendering):
             raw_feature = torch.squeeze(raw_features[i], dim=1)
-            print(raw_feature.size())       # torch.Size([batch_size, 9, 64, 64, 64])
+            # print(raw_feature.size())       # torch.Size([batch_size, 9, 64, 64, 64])
 
             volume_weight = self.layer1(raw_feature)
-            print(volume_weight.size())     # torch.Size([batch_size, 16, 64, 64, 64])
+            # print(volume_weight.size())     # torch.Size([batch_size, 16, 64, 64, 64])
             volume_weight = self.layer2(volume_weight)
-            print(volume_weight.size())     # torch.Size([batch_size, 8, 64, 64, 64])
+            # print(volume_weight.size())     # torch.Size([batch_size, 8, 64, 64, 64])
             volume_weight = self.layer3(volume_weight)
-            print(volume_weight.size())     # torch.Size([batch_size, 4, 64, 64, 64])
+            # print(volume_weight.size())     # torch.Size([batch_size, 4, 64, 64, 64])
             volume_weight = self.layer4(volume_weight)
-            print(volume_weight.size())     # torch.Size([batch_size, 2, 64, 64, 64])
+            # print(volume_weight.size())     # torch.Size([batch_size, 2, 64, 64, 64])
             volume_weight = self.layer5(volume_weight)
-            print(volume_weight.size())     # torch.Size([batch_size, 1, 64, 64, 64])
+            # print(volume_weight.size())     # torch.Size([batch_size, 1, 64, 64, 64])
 
             volume_weight = torch.squeeze(volume_weight, dim=1)
-            print(volume_weight.size())     # torch.Size([batch_size, 64, 64, 64])
+            # print(volume_weight.size())     # torch.Size([batch_size, 64, 64, 64])
             volume_weights.append(volume_weight)
 
         volume_weights = torch.stack(volume_weights).permute(1, 0, 2, 3, 4).contiguous()

@@ -24,6 +24,7 @@ from config import cfg
 from core.train_GAN import train_net
 from core.test_GAN import test_net
 
+
 def get_args_from_command_line():
     parser = ArgumentParser(description='Parser of Runner of Pix2Vox')
     parser.add_argument('--gpu',
@@ -71,7 +72,7 @@ def main():
     # Set GPU to use
     # if type(cfg.CONST.DEVICE) == str:
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = '2, 3'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
     # Start train/test process
     if not args.test:

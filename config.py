@@ -33,11 +33,10 @@ __C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = '/home/jzw/work/pix2vox/datas
 
 # ShapeNet Modified (AI Server)
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
-__C.DATASETS.SHAPENET.RENDERING_VIEWS        = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Rendering/%s/%s/rendering/views.txt'
-__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32/%s/%s/model.binvox'
-__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = './datasets/KISTI_volume_CT_mesh_sc32_fill/KISTI_Vox32_BD/%s/%s/model.binvox'
-
+__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_volume_CT_mesh_sc64_fill/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
+__C.DATASETS.SHAPENET.RENDERING_VIEWS        = './datasets/KISTI_volume_CT_mesh_sc64_fill/KISTI_Rendering/%s/%s/rendering/views.txt'
+__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume_CT_mesh_sc64_fill/KISTI_Vox/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = './datasets/KISTI_volume_CT_mesh_sc64_fill/KISTI_Vox_BD/%s/%s/model.binvox'
 
 __C.DATASETS.PASCAL3D                       = edict()
 __C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'
@@ -106,8 +105,8 @@ __C.TRAIN.RANDOM_BG_COLOR_RANGE             = [[225, 255], [225, 255], [225, 255
 __C.TRAIN.POLICY                            = 'adam'        # available options: sgd, adam
 __C.TRAIN.EPOCH_START_USE_REFINER           = 0
 __C.TRAIN.EPOCH_START_USE_MERGER            = 0
-__C.TRAIN.ENCODER_LEARNING_RATE             = 1e-5
-__C.TRAIN.DECODER_LEARNING_RATE             = 1e-6
+__C.TRAIN.ENCODER_LEARNING_RATE             = 1e-4
+__C.TRAIN.DECODER_LEARNING_RATE             = 1e-4
 __C.TRAIN.REFINER_LEARNING_RATE             = 1e-4
 __C.TRAIN.MERGER_LEARNING_RATE              = 1e-4
 __C.TRAIN.ENCODER_LR_MILESTONES             = [150]

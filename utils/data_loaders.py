@@ -71,6 +71,7 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
             rendering_images = []
             for image_path in image_paths:
                 rendering_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED).astype(np.uint8)
+                rendering_image = cv2.resize(rendering_image, dsize=(128, 128), interpolation=cv2.INTER_AREA)
                 if len(rendering_image.shape) < 3:
                     print('[FATAL] %s It seems that there is something wrong with the image file %s' %
                           (dt.now(), image_path))

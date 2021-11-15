@@ -12,13 +12,13 @@ with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x_64_thres_0_35/gtv_f_
 data = model.data
 '''
 
-data = np.load('J:/Program/Pix2Vox-master/voxel_log/211102_1_ct_vol_e_pix2vox_test_m_BCE_15_lr_1e-5_v_dice_30_sc64_fill_lr_1e-4_4_epoch_300_thr_0_4_max_h/gv_000004.npy')
+data = np.load('J:/Program/Pix2Vox-master/voxel_log/211110_5_loss_GAN_epoch_0_250_G_1_D_linear_increase_7/gv/gv_000249.npy')
 
-volume = data.squeeze().__ge__(0.4)
+volume = data.squeeze().__ge__(0.36)
 fig = plt.figure()
 ax = fig.gca(projection=Axes3D.name)
 ax.set_aspect('auto')
 ax.voxels(volume, edgecolor="k", linewidth=0.25)
 
-plt.savefig('J:/Program/Pix2Vox-master/image_log/211102_1_ct_vol_e_pix2vox_train_m_BCE_15_lr_1e-5_v_dice_30_sc64_fill_lr_1e-4_4_epoch_0_400_thr_0_4_max_h/gv_000004_epoch_300.png', bbox_inches='tight')
+plt.savefig('J:/Program/Pix2Vox-master/image_log/211110_5_loss_GAN_epoch_0_250_G_1_D_linear_increase_7/gv_000249.png', bbox_inches='tight')
 plt.close()

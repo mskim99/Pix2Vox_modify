@@ -153,10 +153,10 @@ def train_net(cfg):
     dist.init_process_group(backend='nccl', rank=1, world_size=2, init_method='env://')
     '''
     if torch.cuda.is_available():
-        encoder = torch.nn.DataParallel(encoder, device_ids=[0, 1]).cuda()
-        decoder = torch.nn.DataParallel(decoder, device_ids=[0, 1]).cuda()
-        refiner = torch.nn.DataParallel(refiner, device_ids=[0, 1]).cuda()
-        merger = torch.nn.DataParallel(merger, device_ids=[0, 1]).cuda()
+        encoder = torch.nn.DataParallel(encoder).cuda()
+        decoder = torch.nn.DataParallel(decoder).cuda()
+        refiner = torch.nn.DataParallel(refiner).cuda()
+        merger = torch.nn.DataParallel(merger).cuda()
 
     # Set up loss functions
     bce_loss = torch.nn.BCELoss()
@@ -203,7 +203,7 @@ def train_net(cfg):
                     ground_truth_volumes, ground_truth_volumes_mesh) in enumerate(train_data_loader):
 
         ground_truth_volumes = ground_truth_volumes.float() / 255.
-        ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volumes, 0.29, 64)
+        ground_truth_volume_thres = uaf.Extract_Amplify_Features(ground_truth_volumes, 0.36, 64)
         ground_truth_volumes_thres[batch_idx] = ground_truth_volume_thres
     ground_truth_volumes_thres = utils.network_utils.var_or_cuda(ground_truth_volumes_thres)
 
@@ -239,6 +239,8 @@ def train_net(cfg):
             # Measure data time
             data_time.update(time() - batch_end_time)
 
+            ground_truth_volumes = ground_truth_volumes.float() / 255.
+
             # Get data from data loader
             ground_truth_volumes = utils.network_utils.var_or_cuda(ground_truth_volumes)
             # ground_truth_volumes_mesh = utils.network_utils.var_or_cuda(ground_truth_volumes_mesh)
@@ -254,34 +256,8 @@ def train_net(cfg):
                 generated_volumes = torch.mean(generated_volumes, dim=1)
 
             generated_volumes = generated_volumes.float()
-            ground_truth_volumes = ground_truth_volumes.float() / 255.
             # ground_truth_volumes_thres = uaf.Extract_Amplify_Features(ground_truth_volumes, 0.35, 32)
             # ground_truth_volumes_mesh = ground_truth_volumes_mesh.float() / 255.
-
-            # Set target for Cross Entropy Loss (4 classes)
-            # 1 : 0 ~ 73 / 2 : 73 ~ 81, 3 : 81 ~ 97, 4 : 97 ~ 255
-            '''
-            class1_pos = torch.where(ground_truth_volumes[:, :, :] < 0.2863)
-            class2_pos = torch.where((ground_truth_volumes[:, :, :] >= 0.2863) & (ground_truth_volumes[:, :] < 0.3176))
-            class3_pos = torch.where((ground_truth_volumes[:, :, :] >= 0.3176) & (ground_truth_volumes[:, :] < 0.3804))
-            class4_pos = torch.where(ground_truth_volumes[:, :, :] >= 0.3804)
-
-            gtv_target = torch.zeros(ground_truth_volumes.shape).cuda()
-            gtv_target[class1_pos] = 1.0
-            gtv_target[class2_pos] = 2.0
-            gtv_target[class3_pos] = 3.0
-            gtv_target[class4_pos] = 4.0
-
-            bce_logits_loss = torch.nn.BCEWithLogitsLoss(pos_weight=gtv_target)
-            '''
-            '''
-            loss_iou_thres = 0.4
-            _volume = torch.ge(generated_volumes, loss_iou_thres).float()
-            _gt_volume = torch.ge(ground_truth_volumes_mesh, loss_iou_thres).float()
-            intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
-            union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
-            iou_weight = (1. - (intersection / union))
-            '''
 
             # print("gv size : " + str(generated_volumes.size()))
             # print("gtv size : " + str(ground_truth_volumes.size()))
@@ -294,9 +270,11 @@ def train_net(cfg):
             # old_loss = bce_logits_loss(generated_volumes, gtv_target) * 30
             # encoder_loss = 3e12 * utils.loss_function.ls_loss(generated_volumes, ground_truth_volumes, 0.3137, 1.)
             # encoder_loss = utils.loss_function.dice_loss(generated_volumes, ground_truth_volumes, 0.4, 1.0, 30.)
-            gtv_mse_loss = mse_loss(generated_volumes, ground_truth_volumes) * 150.
-            gtv_dice_loss = utils.loss_function.dice_loss(generated_volumes, ground_truth_volumes, 0.4) * 30.
-            gtv_loss = gtv_dice_loss
+            gv_p = torch.ge(generated_volumes, 0.29).float() * generated_volumes
+            gtv_p = torch.ge(ground_truth_volumes, 0.29).float() * ground_truth_volumes
+            gtv_mse_loss = mse_loss(gv_p, gtv_p) * 50.
+            gtv_dice_loss = utils.loss_function.dice_loss_weight(generated_volumes, ground_truth_volumes, 0.22, 0.36) * 30.
+            gtv_loss = (gtv_dice_loss + gtv_mse_loss) / 2.
             gtvm_loss = bce_loss(generated_volumes, ground_truth_volumes_thres[batch_idx]) * 30.
             encoder_loss = (gtvm_loss + gtv_loss) * 0.5
 
@@ -384,7 +362,7 @@ def train_net(cfg):
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+            utils.network_utils.save_checkpoints(cfg, './output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
                                                  refiner, refiner_solver, merger, merger_solver, best_iou, best_epoch)
 
@@ -396,7 +374,7 @@ def train_net(cfg):
             best_iou = iou
             # best_loss = encoder_loss
             best_epoch = epoch_idx + 1
-            utils.network_utils.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints/best-ckpt.pth', epoch_idx + 1, encoder,
+            utils.network_utils.save_checkpoints(cfg, './output/logs/checkpoints/best-ckpt.pth', epoch_idx + 1, encoder,
                                                  encoder_solver, decoder, decoder_solver, refiner, refiner_solver,
                                                  merger, merger_solver, best_iou, best_epoch)
 

@@ -119,6 +119,7 @@ def test_net(cfg,
             # ground_truth_volume_mesh = utils.network_utils.var_or_cuda(ground_truth_volume_mesh)
 
             ground_truth_volumes = ground_truth_volumes.float() / 255.
+            rendering_images = rendering_images / 255.
             # fake_volumes = fake_volumes.float() / 255.
 
             # Train Generator

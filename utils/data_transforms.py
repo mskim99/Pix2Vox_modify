@@ -51,7 +51,7 @@ class ToTensor(object):
         # put it from HWC to CHW format
         # output = torch.stack(out_tensor_list)
         output = torch.tensor(out_tensor_list)
-        output_value = np.resize(output.float(), (1, 112, 3, 112, 112))
+        output_value = np.resize(output.float(), (1, 128, 3, 128, 128))
 
         del output
         torch.cuda.empty_cache()

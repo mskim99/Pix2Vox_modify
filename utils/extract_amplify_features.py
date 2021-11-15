@@ -17,7 +17,20 @@ def Extract_Amplify_Features(volume, thres, res):
     return res_volume
 
 
-def Extract_Amplify_Features_grad_m(volume, thres_min, thres_max, res, mult):
+def Extract_Features_torch(volume, thres, res):
+
+    res_volume = torch.zeros([1, res, res, res])
+
+    # Thresholding
+    remain_pos = torch.where(volume[:, :, :, :] >= thres)
+    remove_pos = torch.where(volume[:, :, :, :] < thres)
+    res_volume[remain_pos] = volume[remain_pos]
+    res_volume[remove_pos] = 0
+
+    return res_volume
+
+
+def Extract_Amplify_Features_grad_m(volume, thres_min, thres_max, res):
 
     res_volume = torch.zeros([1, res, res, res])
     volume = torch.tensor(volume)
