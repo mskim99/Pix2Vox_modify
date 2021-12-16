@@ -25,9 +25,7 @@ from datetime import datetime as dt
 from tensorboardX import SummaryWriter
 from time import time
 
-# from core.test_GAN import test_net
-# from models.encoder_GAN import Encoder
-# from models.decoder_GAN import Decoder
+from core.test_GAN import test_net
 from models.generator import Generator
 from models.discriminator import Discriminator
 
@@ -37,6 +35,8 @@ import math
 np.set_printoptions(threshold=sys.maxsize)
 import itertools
 import cv2
+
+from IQA_pytorch import SSIM
 
 def train_net(cfg):
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
@@ -79,6 +79,7 @@ def train_net(cfg):
                                                   pin_memory=True,
                                                   shuffle=False)
 
+
     # Load taxonomies of dataset
     taxonomies = []
     with open(cfg.DATASETS[cfg.DATASET.TRAIN_DATASET.upper()].TAXONOMY_FILE_PATH, encoding='utf-8') as file:
@@ -99,9 +100,11 @@ def train_net(cfg):
     if cfg.TRAIN.POLICY == 'adam':
         generator_solver = torch.optim.RMSprop(generator.parameters(),
                                           lr=cfg.TRAIN.ENCODER_LEARNING_RATE,
+                                          # weight_decay=0.05,
                                           )
         discriminator_solver = torch.optim.RMSprop(discriminator.parameters(),
                                             lr=cfg.TRAIN.REFINER_LEARNING_RATE,
+                                            # weight_decay=0.05,
                                             )
 
     elif cfg.TRAIN.POLICY == 'sgd':
@@ -130,7 +133,7 @@ def train_net(cfg):
         discriminator = torch.nn.DataParallel(discriminator).cuda()
 
     # Set up loss functions
-    bce_loss = torch.nn.BCEWithLogitsLoss()
+    # bce_loss = torch.nn.BCEWithLogitsLoss()
     # ce_loss = torch.nn.CrossEntropyLoss()
     mse_loss = torch.nn.MSELoss()
     l1_loss = torch.nn.L1Loss()
@@ -139,9 +142,6 @@ def train_net(cfg):
 
     # Load pretrained model if exists
     init_epoch = 0
-    best_iou = -1
-    best_loss = 10000000000
-    best_epoch = -1
 
     if 'WEIGHTS' in cfg.CONST and cfg.TRAIN.RESUME_TRAIN:
         print('[INFO] %s Recovering from %s ...' % (dt.now(), cfg.CONST.WEIGHTS))
@@ -157,20 +157,21 @@ def train_net(cfg):
               (dt.now(), init_epoch))
 
     # Summary writer for TensorBoard
-    # output_dir = os.path.join(cfg.DIR.OUT_PATH, '%s', dt.now().isoformat())
-    # log_dir = output_dir + '/logs'
-    # log_dir = output_dir % 'logs'
     ckpt_dir = './Output/logs_GAN/checkpoints'
     train_writer = SummaryWriter('./output/logs_GAN/train')
     val_writer = SummaryWriter('./output/logs_GAN/test')
 
     # Training loop
-    dis_batch = 1
-    dis_update = False
-    dis_accum = 0
-    gen_batch = 1
-    gen_accum = 0
-    gen_update = False
+    '''
+    prev_dloss = 0.0
+    prev_gloss = 0.0
+    rg = 0.0
+    rd = 0.0
+    update_coef = 1.0
+    '''
+    dis_update = True
+    gen_update = True
+
     for epoch_idx in range(init_epoch, cfg.TRAIN.NUM_EPOCHES):
         # Tick / tock
         epoch_start_time = time()
@@ -181,8 +182,9 @@ def train_net(cfg):
         generator_losses = utils.network_utils_GAN.AverageMeter()
         discriminator_losses = utils.network_utils_GAN.AverageMeter()
         dice_losses = utils.network_utils_GAN.AverageMeter()
-        L2_losses = utils.network_utils_GAN.AverageMeter()
+        SSIM_losses = utils.network_utils_GAN.AverageMeter()
         L1_losses = utils.network_utils_GAN.AverageMeter()
+        iou_losses = utils.network_utils_GAN.AverageMeter()
 
         # switch models to training mode
         generator.train()
@@ -192,27 +194,17 @@ def train_net(cfg):
         test_iou = dict()
         n_batches = len(train_data_loader)
 
-        # Real Image
-        '''
         dis_batch = math.floor((epoch_idx + 6) / 10)
         if dis_batch < 1:
             dis_batch = 1
-        elif dis_batch > 6:
-            dis_batch = 6
-        '''
-
-        # Fake Code
-        dis_batch = math.floor((epoch_idx + 19) / 10)
-        if dis_batch > 15:
-            dis_batch = 15
+        elif dis_batch > 10:
+            dis_batch = 10
 
         for batch_idx, (taxonomy_names, sample_names, rendering_images,
                         ground_truth_volumes, ground_truth_volumes_mesh) in enumerate(train_data_loader):
             taxonomy_name = taxonomy_names[0] if isinstance(taxonomy_names[0], str) else taxonomy_names[0].item()
             # Measure data time
             data_time.update(time() - batch_end_time)
-
-            # rendering_images = Variable(torch.Tensor(np.random.normal(0, 1, (200))))
 
             ground_truth_volumes = ground_truth_volumes.float() / 255.
             rendering_images = rendering_images.float() / 255.
@@ -223,21 +215,39 @@ def train_net(cfg):
 
             ground_truth_volumes = torch.squeeze(ground_truth_volumes)
 
+            if batch_idx % dis_batch == 0:
+                dis_update = True
+            else:
+                dis_update = False
+
             # Train Discriminator
-            # Train the discriminator for every n_critic iterations
-            dis_update = (batch_idx % dis_batch == 0)
-            gen_update = (batch_idx % gen_batch == 0)
             if dis_update:
                 discriminator.zero_grad()
 
-                gen_volumes = generator(rendering_images).detach()
-                dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
-                L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
-                L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
-                discriminator_loss = - torch.mean(discriminator(ground_truth_volumes)) \
-                                     + torch.mean(discriminator(gen_volumes))
-                discriminator_loss = discriminator_loss + (L2_loss + dice_loss) / 2.
+            gen_volumes = generator(rendering_images).detach()
+            dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
+            L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
+            L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
+            SSIM_loss = utils.loss_function.ssim_loss_volume(gen_volumes, ground_truth_volumes)
+            SSIM_loss = 0.5 - SSIM_loss
 
+            # IoU per sample
+            sample_iou = []
+            for th in [.3, .4, .5]:
+                _volume = torch.ge(gen_volumes, th).float()
+                _gt_volume = torch.ge(ground_truth_volumes, th).float()
+                intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
+                union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
+                sample_iou.append((intersection / union).item())
+
+            iou_loss = sum(sample_iou) / len(sample_iou)
+            iou_loss = 0.5 - iou_loss
+
+            discriminator_loss = - torch.mean(discriminator(ground_truth_volumes)) \
+                                 + torch.mean(discriminator(gen_volumes))
+            discriminator_loss = discriminator_loss + 4. * L1_loss + 3. * SSIM_loss + 2. * iou_loss
+
+            if dis_update:
                 if gen_update:
                     discriminator_loss.backward(retain_graph=True)
                 else:
@@ -253,16 +263,31 @@ def train_net(cfg):
             if gen_update:
                 generator_solver.zero_grad()
 
-                gen_volumes = generator(rendering_images)
-                dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
-                L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
-                L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
-                generator_loss = -torch.mean(discriminator(gen_volumes))
-                generator_loss = generator_loss + (L2_loss + dice_loss) / 2.
+            gen_volumes = generator(rendering_images)
+            dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
+            L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
+            L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
+            SSIM_loss = utils.loss_function.ssim_loss_volume(gen_volumes, ground_truth_volumes)
+            SSIM_loss = 0.5 - SSIM_loss
 
+            # IoU per sample
+            sample_iou = []
+            for th in [.3, .4, .5]:
+                _volume = torch.ge(gen_volumes, th).float()
+                _gt_volume = torch.ge(ground_truth_volumes, th).float()
+                intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
+                union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
+                sample_iou.append((intersection / union).item())
+
+            iou_loss = sum(sample_iou) / len(sample_iou)
+            iou_loss = 0.5 - iou_loss
+
+            generator_loss = -torch.mean(discriminator(gen_volumes))
+            generator_loss = generator_loss + 4. * L1_loss + 3. * SSIM_loss + 2. * iou_loss
+
+            if gen_update:
                 generator_loss.backward()
                 generator_solver.step()
-
 
             generator_loss_value = generator_loss.item()
             discriminator_loss_value = discriminator_loss.item()
@@ -271,59 +296,48 @@ def train_net(cfg):
             generator_losses.update(generator_loss_value)
             discriminator_losses.update(discriminator_loss_value)
             dice_losses.update(dice_loss.item())
-            L2_losses.update(L2_loss.item())
+            SSIM_losses.update(SSIM_loss.item())
             L1_losses.update(L1_loss.item())
+            iou_losses.update(iou_loss)
 
-            # Fake Code
-            if discriminator_loss_value > 0.05:
-                dis_batch = 1
-            elif discriminator_loss_value < -0.7:
-                dis_batch = math.floor((epoch_idx + 19) / 10)
-                if dis_batch > 10:
-                    dis_batch = 10
-
-            # Real Image
             '''
-            if discriminator_loss_value > -0.05:
-                dis_batch = 1
+            if discriminator_loss_value > 0.25:
+                dis_batch == 1
             elif discriminator_loss_value < -0.8:
                 dis_batch = math.floor((epoch_idx + 6) / 10)
                 if dis_batch < 1:
                     dis_batch = 1
-                elif dis_batch > 6:
-                    dis_batch = 6
-                    '''
+                elif dis_batch > 10:
+                    dis_batch = 10
             '''
-            # Renew discriminator / generator Interval
-            if dis_update:
-                if discriminator_loss_value > -0.8:
-                    dis_batch = 1
-                    dis_accum = 0
-                if (discriminator_loss_value <= -0.8) & (discriminator_loss_value > -0.9):
-                    dis_batch = 3 + 2 * dis_accum
-                    dis_accum = dis_accum + 1
-                if discriminator_loss_value < -0.9:
-                    dis_batch = 3 + 3 * dis_accum
-                    dis_accum = dis_accum + 1
 
-            # Renew discriminator / generator Interval
-            if gen_update:
-                if generator_loss_value > -0.8:
-                    gen_batch = 1
-                    gen_accum = 0
-                if (generator_loss_value <= -0.8) & (generator_loss_value > -0.9):
-                    gen_batch = 3 + 2 * gen_accum
-                    gen_accum = gen_accum + 1
-                if generator_loss_value < -0.9:
-                    gen_batch = 5 + 3 * gen_accum
-                    gen_accum = gen_accum + 1
-
-            if (not dis_update) & (not gen_update):
-                dis_batch = 1
-                dis_accum = 0
-                gen_batch = 1
-                gen_accum = 0
+            # Check if discriminator, generator is updated
             '''
+            if prev_dloss == 0.0 or prev_gloss == 0.0:
+                dis_update = True
+                gen_update = True
+            else:
+                rg = abs((generator_loss_value - prev_gloss) / prev_gloss)
+                rd = abs((discriminator_loss_value - prev_dloss) / prev_dloss)
+                if rd > update_coef * rg:
+                    dis_update = True
+                    gen_update = False
+                else:
+                    dis_update = False
+                    gen_update = True
+
+            prev_gloss = generator_loss_value
+            prev_dloss = discriminator_loss_value
+            '''
+
+            # IoU per sample
+            sample_iou = []
+            for th in cfg.TEST.VOXEL_THRESH:
+                _volume = torch.ge(gen_volumes, th).float()
+                _gt_volume = torch.ge(ground_truth_volumes, th).float()
+                intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
+                union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
+                sample_iou.append((intersection / union).item())
 
             # Append loss to TensorBoard
             n_itr = epoch_idx * n_batches + batch_idx
@@ -335,24 +349,22 @@ def train_net(cfg):
             batch_time.update(time() - batch_end_time)
             batch_end_time = time()
             print(
-                '[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) GLoss = %.6f DLoss = %.6f DiceLoss = %.6f L2Loss = %.6f L1Loss = %.6f'
+                '[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) GLoss = %.6f DLoss = %.6f IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f GU = %r DU = %r'
                 % (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, batch_idx + 1, n_batches, batch_time.val,
-                   data_time.val, generator_loss.item(), discriminator_loss.item(), dice_loss.item(), L2_loss.item(), L1_loss.item()))
-
-            # IoU per sample
-            sample_iou = []
-            for th in cfg.TEST.VOXEL_THRESH:
-                _volume = torch.ge(gen_volumes, th).float()
-                _gt_volume = torch.ge(ground_truth_volumes, th).float()
-                intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
-                union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
-                sample_iou.append((intersection / union).item())
+                   data_time.val, generator_loss.item(), discriminator_loss.item(), iou_loss, SSIM_loss.item(), L1_loss.item(), gen_update, dis_update))
 
             # IoU per taxonomy
             if taxonomy_name not in test_iou:
                 test_iou[taxonomy_name] = {'n_samples': 0, 'iou': []}
             test_iou[taxonomy_name]['n_samples'] += 1
             test_iou[taxonomy_name]['iou'].append(sample_iou)
+
+            if batch_idx == 1:
+                gv = gen_volumes.detach().cpu().numpy()
+                np.save('/home/jzw/work/pix2vox/output/voxel/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
+
+                gtv = ground_truth_volumes.cpu().numpy()
+                np.save('/home/jzw/work/pix2vox/output/voxel/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
 
         # Append epoch loss to TensorBoard
         train_writer.add_scalar('Generator/EpochLoss', generator_losses.avg, epoch_idx + 1)
@@ -364,15 +376,9 @@ def train_net(cfg):
 
         # Tick / tock
         epoch_end_time = time()
-        print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) GLoss = %.8f DLoss = %.8f DiceLoss = %.8f L2Loss = %.6f L1Loss = %.6f' %
+        print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) GLoss = %.8f DLoss = %.8f IoULoss = %.8f SSIMLoss = %.6f L1Loss = %.6f' %
               (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, epoch_end_time - epoch_start_time,
-               generator_losses.avg, discriminator_losses.avg, dice_losses.avg, L2_losses.avg, L1_losses.avg))
-
-        gv = gen_volumes.detach().cpu().numpy()
-        np.save('./output/voxel_GAN/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
-
-        gtv = ground_truth_volumes.cpu().numpy()
-        np.save('./output/voxel_GAN/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
+               generator_losses.avg, discriminator_losses.avg, iou_losses.avg, SSIM_losses.avg, L1_losses.avg))
 
         # Update Rendering Views
         if cfg.TRAIN.UPDATE_N_VIEWS_RENDERING:
@@ -382,14 +388,15 @@ def train_net(cfg):
                   (dt.now(), epoch_idx + 2, cfg.TRAIN.NUM_EPOCHES, n_views_rendering))
 
         # Validate the training models
-        # iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, discriminator)
+        print('\n')
+        iou = test_net(cfg, epoch_idx + 1, val_data_loader, val_writer, generator)
 
         # Save weights to file
         if (epoch_idx + 1) % cfg.TRAIN.SAVE_FREQ == 0:
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils_GAN.save_checkpoints(cfg, './output/logs_GAN/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+            utils.network_utils_GAN.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, generator, generator_solver,
                                                  discriminator, discriminator_solver)
 
@@ -401,7 +408,7 @@ def train_net(cfg):
         mean_iou = np.sum(mean_iou, axis=0) / cfg.TRAIN.NUM_EPOCHES
 
         # Print header
-        print('============================ TEST RESULTS ============================')
+        print('============================ TRAIN RESULTS ============================')
         print('Taxonomy', end='\t')
         print('#Sample', end='\t')
         print('Baseline', end='\t')

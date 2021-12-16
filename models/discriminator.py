@@ -20,21 +20,25 @@ class Discriminator(torch.nn.Module):
             torch.nn.Conv3d(1, 64, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm3d(64),
             torch.nn.LeakyReLU(0.2, inplace=True),
+            torch.nn.Dropout3d(0.3),
         )
         self.layer2 = torch.nn.Sequential(
             torch.nn.Conv3d(64, 128, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm3d(128),
             torch.nn.LeakyReLU(0.2, inplace=True),
+            torch.nn.Dropout3d(0.3),
         )
         self.layer3 = torch.nn.Sequential(
             torch.nn.Conv3d(128, 256, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm3d(256),
             torch.nn.LeakyReLU(0.2, inplace=True),
+            torch.nn.Dropout3d(0.3),
         )
         self.layer4 = torch.nn.Sequential(
             torch.nn.Conv3d(256, 512, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm3d(512),
             torch.nn.LeakyReLU(0.2, inplace=True),
+            torch.nn.Dropout3d(0.3),
         )
         self.layer5 = torch.nn.Sequential(
             torch.nn.Linear(512 * 4 * 4 * 4, 1),

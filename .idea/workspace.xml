@@ -148,14 +148,14 @@
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
-    <property name="settings.editor.selected.configurable" value="web.server" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="J:\Program\Pix2Vox-master\Pix2Vox-master\utils" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.runner_server_GAN">
+  <component name="RunManager" selected="Python.binvox_visualization_offline">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="Pix2Vox-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -310,7 +310,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="gtv_to_vtk" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+    <configuration name="gtv_to_vtk" type="PythonConfigurationType" factoryName="Python" singleton="false" nameIsGenerated="true">
       <module name="Pix2Vox-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -332,7 +332,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="make_dirs" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="make_dirs" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="Pix2Vox-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -346,6 +346,28 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test/make_dirs.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="make_ground_truth" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="Pix2Vox-master" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="D:\ProgramData\Python37\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/test" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test/make_ground_truth.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -421,6 +443,29 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="runner2" type="PythonConfigurationType" factoryName="Python" singleton="false">
+      <output_file path="$PROJECT_DIR$/../console_log/output_log2.txt" is_save="true" />
+      <module name="Pix2Vox-master" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="sftp://jzw@165.246.44.232:22/home/jzw/anaconda3/envs/mytorch/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/test" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/runner.py" />
+      <option name="PARAMETERS" value="--epoch 400" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="runner_client" type="PythonConfigurationType" factoryName="Python" singleton="false">
       <output_file path="$PROJECT_DIR$/../console_log/output_log.txt" is_save="true" />
       <module name="Pix2Vox-master" />
@@ -459,7 +504,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/runner.py" />
-      <option name="PARAMETERS" value="" />
+      <option name="PARAMETERS" value="--epoch 400 --weights=/workspace/pix2vox/output/logs/checkpoints/ckpt-epoch-0240.pth" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -482,7 +527,30 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/runner.py" />
-      <option name="PARAMETERS" value="" />
+      <option name="PARAMETERS" value="--epoch 400 --weights=/workspace/pix2vox/output/logs_GAN/checkpoints/ckpt-epoch-0240.pth" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="runner_server_GAN2" type="PythonConfigurationType" factoryName="Python" singleton="false">
+      <output_file path="$PROJECT_DIR$/../console_log/output_log_server_GAN2.txt" is_save="true" />
+      <module name="Pix2Vox-master" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/runner.py" />
+      <option name="PARAMETERS" value="--epoch 400 --weights=/workspace/pix2vox/output/logs_GAN2/checkpoints/ckpt-epoch-0240.pth" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -506,6 +574,29 @@
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/runner.py" />
       <option name="PARAMETERS" value="--test --weights=/workspace/pix2vox/output/logs/checkpoints/ckpt-epoch-0375.pth" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="runner_test" type="PythonConfigurationType" factoryName="Python" singleton="false">
+      <output_file path="$PROJECT_DIR$/../console_log/output_log_test.txt" is_save="true" />
+      <module name="Pix2Vox-master" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="sftp://jzw@165.246.44.232:22/home/jzw/anaconda3/envs/mytorch/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/test" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/runner.py" />
+      <option name="PARAMETERS" value="--test --weights=/home/jzw/work/pix2vox/output/logs/checkpoints_test/ckpt-epoch-0400_AL_lr_5e-5.pth" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -584,15 +675,19 @@
       <item itemvalue="Python.copy_paste" />
       <item itemvalue="Python.numpy_vtk" />
       <item itemvalue="Python.runner" />
+      <item itemvalue="Python.runner_test" />
+      <item itemvalue="Python.runner2" />
       <item itemvalue="Python.runner_client" />
       <item itemvalue="Python.runner_server" />
       <item itemvalue="Python.runner_server_GAN" />
+      <item itemvalue="Python.runner_server_GAN2" />
       <item itemvalue="Python.test" />
       <item itemvalue="Python.process_binvox" />
       <item itemvalue="Python.gtv_to_vtk" />
       <item itemvalue="Python.binvox_npy" />
       <item itemvalue="Python.binvox_visualization_offline (1)" />
       <item itemvalue="Python.analyze_binvox" />
+      <item itemvalue="Python.make_ground_truth" />
       <item itemvalue="Python.make_dirs" />
       <item itemvalue="Python.test_binvox" />
       <item itemvalue="Python.binvox_visualization_offline" />
@@ -602,9 +697,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.binvox_visualization_offline" />
-        <item itemvalue="Python.make_dirs" />
-        <item itemvalue="Python.test_binvox" />
         <item itemvalue="Python.train_GAN" />
+        <item itemvalue="Python.test_binvox" />
         <item itemvalue="Python.extract_amplify_features" />
       </list>
     </recent_temporary>
@@ -664,7 +758,19 @@
       <workItem from="1636047603721" duration="108370000" />
       <workItem from="1636456841078" duration="5887000" />
       <workItem from="1636510214219" duration="29830000" />
-      <workItem from="1636596832106" duration="30772000" />
+      <workItem from="1636596832106" duration="40774000" />
+      <workItem from="1637569214921" duration="4009000" />
+      <workItem from="1637720819899" duration="138601000" />
+      <workItem from="1638776671558" duration="25481000" />
+      <workItem from="1638940260903" duration="15412000" />
+      <workItem from="1639042020806" duration="13824000" />
+      <workItem from="1639201106755" duration="3726000" />
+      <workItem from="1639219435586" duration="351000" />
+      <workItem from="1639237010858" duration="24177000" />
+      <workItem from="1639451943665" duration="6586000" />
+      <workItem from="1639472461106" duration="13924000" />
+      <workItem from="1639574082288" duration="6402000" />
+      <workItem from="1639629581353" duration="15906000" />
     </task>
     <servers />
   </component>
@@ -733,9 +839,6 @@
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
-  <component name="VcsContentAnnotationSettings">
-    <option name="myLimit" value="2678400000" />
-  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
@@ -764,6 +867,11 @@
           <line>90</line>
           <option name="timeStamp" value="30" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/core/train_GAN.py</url>
+          <line>362</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
@@ -776,25 +884,29 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Pix2Vox_master$binvox_npy.coverage" NAME="binvox_npy Coverage Results" MODIFIED="1636098869982" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$binvox_visualization_offline.coverage" NAME="binvox_visualization_offline Coverage Results" MODIFIED="1639645381459" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$make_dirs.coverage" NAME="make_dirs Coverage Results" MODIFIED="1638933923981" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$copy_paste.coverage" NAME="copy_paste Coverage Results" MODIFIED="1638934008308" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$train_GAN.coverage" NAME="train_GAN Coverage Results" MODIFIED="1638536045891" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$make_ground_truth.coverage" NAME="make_ground_truth Coverage Results" MODIFIED="1638240954638" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_server.coverage" NAME="runner_server Coverage Results" MODIFIED="1639574333342" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_server_GAN2.coverage" NAME="runner_server_GAN2 Coverage Results" MODIFIED="1639574149551" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner.coverage" NAME="runner Coverage Results" MODIFIED="1639641731098" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_client.coverage" NAME="runner_client Coverage Results" MODIFIED="1635129814940" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$train.coverage" NAME="train Coverage Results" MODIFIED="1632040346040" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner2.coverage" NAME="runner2 Coverage Results" MODIFIED="1639634643929" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$numpy_vtk.coverage" NAME="numpy_vtk Coverage Results" MODIFIED="1639644836318" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$test_binvox.coverage" NAME="test_binvox Coverage Results" MODIFIED="1635906706822" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$Python_3_7.coverage" NAME="Python 3.7 Coverage Results" MODIFIED="1633244526895" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$binvox_visualization_offline.coverage" NAME="binvox_visualization_offline Coverage Results" MODIFIED="1636605270165" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$make_dirs.coverage" NAME="make_dirs Coverage Results" MODIFIED="1636125718189" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_server_test.coverage" NAME="runner_server_test Coverage Results" MODIFIED="1636441056289" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$analyze_binvox.coverage" NAME="analyze_binvox Coverage Results" MODIFIED="1635765307167" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$temp.coverage" NAME="temp Coverage Results" MODIFIED="1631798588658" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$test.coverage" NAME="test Coverage Results" MODIFIED="1634095227647" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$copy_paste.coverage" NAME="copy_paste Coverage Results" MODIFIED="1636126488000" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$train_GAN.coverage" NAME="train_GAN Coverage Results" MODIFIED="1635839419462" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$binvox_visualization_offline__1_.coverage" NAME="binvox_visualization_offline (1) Coverage Results" MODIFIED="1635416376315" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_server.coverage" NAME="runner_server Coverage Results" MODIFIED="1636685157067" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner.coverage" NAME="runner Coverage Results" MODIFIED="1636283795454" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$gtv_to_vtk.coverage" NAME="gtv_to_vtk Coverage Results" MODIFIED="1635144181320" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$gtv_to_vtk.coverage" NAME="gtv_to_vtk Coverage Results" MODIFIED="1638932143325" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_test.coverage" NAME="runner_test Coverage Results" MODIFIED="1639633910962" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$Doctests_in_data_transforms.coverage" NAME="Doctests in data_transforms Coverage Results" MODIFIED="1633432326833" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_server_GAN.coverage" NAME="runner_server_GAN Coverage Results" MODIFIED="1636944845586" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_client.coverage" NAME="runner_client Coverage Results" MODIFIED="1635129814940" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$train.coverage" NAME="train Coverage Results" MODIFIED="1632040346040" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
-    <SUITE FILE_PATH="coverage/Pix2Vox_master$numpy_vtk.coverage" NAME="numpy_vtk Coverage Results" MODIFIED="1636868599310" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/Pix2Vox_master$runner_server_GAN.coverage" NAME="runner_server_GAN Coverage Results" MODIFIED="1639574256053" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$extract_amplify_features.coverage" NAME="extract_amplify_features Coverage Results" MODIFIED="1635571638809" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$loss_function.coverage" NAME="loss_function Coverage Results" MODIFIED="1634140627460" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/Pix2Vox_master$process_binvox.coverage" NAME="process_binvox Coverage Results" MODIFIED="1635144798154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />

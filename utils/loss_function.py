@@ -2,6 +2,7 @@ import torch
 import utils.network_utils
 import math
 
+from IQA_pytorch import SSIM
 
 def loss_gtv(gv, gtv, thres, mv, b=1):
 
@@ -70,8 +71,8 @@ def dice_loss_weight(gv, gtv, thres_min, thres_max, smooth = 1e-5):
     gv_weight = utils.network_utils.var_or_cuda(gv_weight)
     gtv_weight = utils.network_utils.var_or_cuda(gtv_weight)
 
-    gv_between_pos = torch.where((gv[:, :, :, :] <= thres_max) & (gv[:, :, :, :] >= thres_min))
-    gtv_between_pos = torch.where((gtv[:, :, :, :] <= thres_max) & (gtv[:, :, :, :] >= thres_min))
+    gv_between_pos = torch.where((gv[:, :, :] <= thres_max) & (gv[:, :, :] >= thres_min))
+    gtv_between_pos = torch.where((gtv[:, :, :] <= thres_max) & (gtv[:, :, :] >= thres_min))
 
     # linear weight
     gv_w = torch.abs((gv[gv_between_pos] - thres) / (thres_max - thres))
@@ -97,6 +98,21 @@ def dice_loss_weight(gv, gtv, thres_min, thres_max, smooth = 1e-5):
     dice_loss = FP_loss_intersection / (FP_loss_union + smooth) + TN_loss_intersection / (TN_loss_union + smooth)
 
     return dice_loss
+
+
+def ssim_loss_volume(gv, gtv):
+    SSIM_loss = SSIM(channels=1)
+    loss_total = 0.0
+    for i in range (0, gv.shape[2]):
+        gv_part = gv[:, :, i]
+        gtv_part = gtv[:, :, i]
+        gv_part = gv_part.reshape(1, 1, gv_part.shape[0], gv_part.shape[1])
+        gtv_part = gtv_part.reshape(1, 1, gtv_part.shape[0], gtv_part.shape[1])
+        ssim_loss_part = SSIM_loss(gv_part, gtv_part, as_loss=False)
+        loss_total += ssim_loss_part
+
+    loss_total = loss_total / gv.shape[2]
+    return loss_total
 
 
 def cal_bgtm_in(mahv_gv, gtv):
