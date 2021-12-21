@@ -33,10 +33,8 @@ import numpy as np
 import sys
 import math
 np.set_printoptions(threshold=sys.maxsize)
-import itertools
-import cv2
 
-from IQA_pytorch import SSIM
+from sklearn.preprocessing import MinMaxScaler
 
 def train_net(cfg):
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
@@ -200,14 +198,23 @@ def train_net(cfg):
         elif dis_batch > 10:
             dis_batch = 10
 
+        volume_scaler = MinMaxScaler()
+        image_scaler = MinMaxScaler()
+
         for batch_idx, (taxonomy_names, sample_names, rendering_images,
                         ground_truth_volumes, ground_truth_volumes_mesh) in enumerate(train_data_loader):
             taxonomy_name = taxonomy_names[0] if isinstance(taxonomy_names[0], str) else taxonomy_names[0].item()
             # Measure data time
             data_time.update(time() - batch_end_time)
 
-            ground_truth_volumes = ground_truth_volumes.float() / 255.
-            rendering_images = rendering_images.float() / 255.
+            ground_truth_volumes = volume_scaler.fit_transform(ground_truth_volumes.reshape(-1, ground_truth_volumes.shape[-1])).reshape(ground_truth_volumes.shape)
+            rendering_images = image_scaler.fit_transform(rendering_images.reshape(-1, rendering_images.shape[-1])).reshape(rendering_images.shape)
+
+            ground_truth_volumes = torch.from_numpy(ground_truth_volumes).type(torch.FloatTensor)
+            rendering_images = torch.from_numpy(rendering_images).type(torch.FloatTensor)
+
+            # ground_truth_volumes = ground_truth_volumes.float() / 255.
+            # rendering_images = rendering_images.float() / 255.
 
             # Get data from data loader
             ground_truth_volumes = utils.network_utils_GAN.var_or_cuda(ground_truth_volumes)
@@ -233,7 +240,7 @@ def train_net(cfg):
 
             # IoU per sample
             sample_iou = []
-            for th in [.3, .4, .5]:
+            for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(gen_volumes, th).float()
                 _gt_volume = torch.ge(ground_truth_volumes, th).float()
                 intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
@@ -245,7 +252,7 @@ def train_net(cfg):
 
             discriminator_loss = - torch.mean(discriminator(ground_truth_volumes)) \
                                  + torch.mean(discriminator(gen_volumes))
-            discriminator_loss = discriminator_loss + 4. * L1_loss + 3. * SSIM_loss + 2. * iou_loss
+            discriminator_loss = discriminator_loss + 2. * L1_loss + 2. * SSIM_loss + 4 * iou_loss
 
             if dis_update:
                 if gen_update:
@@ -272,7 +279,7 @@ def train_net(cfg):
 
             # IoU per sample
             sample_iou = []
-            for th in [.3, .4, .5]:
+            for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(gen_volumes, th).float()
                 _gt_volume = torch.ge(ground_truth_volumes, th).float()
                 intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
@@ -283,7 +290,7 @@ def train_net(cfg):
             iou_loss = 0.5 - iou_loss
 
             generator_loss = -torch.mean(discriminator(gen_volumes))
-            generator_loss = generator_loss + 4. * L1_loss + 3. * SSIM_loss + 2. * iou_loss
+            generator_loss = generator_loss + 2. * L1_loss + 2. * SSIM_loss + 4 * iou_loss
 
             if gen_update:
                 generator_loss.backward()
@@ -330,15 +337,6 @@ def train_net(cfg):
             prev_dloss = discriminator_loss_value
             '''
 
-            # IoU per sample
-            sample_iou = []
-            for th in cfg.TEST.VOXEL_THRESH:
-                _volume = torch.ge(gen_volumes, th).float()
-                _gt_volume = torch.ge(ground_truth_volumes, th).float()
-                intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
-                union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
-                sample_iou.append((intersection / union).item())
-
             # Append loss to TensorBoard
             n_itr = epoch_idx * n_batches + batch_idx
             train_writer.add_scalar('Generator/BatchLoss', generator_loss.item(), n_itr)
@@ -361,10 +359,10 @@ def train_net(cfg):
 
             if batch_idx == 1:
                 gv = gen_volumes.detach().cpu().numpy()
-                np.save('/home/jzw/work/pix2vox/output/voxel/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
+                np.save('/home/jzw/work/pix2vox/output/voxel2/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
 
                 gtv = ground_truth_volumes.cpu().numpy()
-                np.save('/home/jzw/work/pix2vox/output/voxel/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
+                np.save('/home/jzw/work/pix2vox/output/voxel2/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
 
         # Append epoch loss to TensorBoard
         train_writer.add_scalar('Generator/EpochLoss', generator_losses.avg, epoch_idx + 1)
@@ -389,16 +387,16 @@ def train_net(cfg):
 
         # Validate the training models
         print('\n')
-        iou = test_net(cfg, epoch_idx + 1, val_data_loader, val_writer, generator)
+        iou = test_net(cfg, epoch_idx + 1, val_data_loader, val_writer, generator, volume_scaler, image_scaler)
 
         # Save weights to file
         if (epoch_idx + 1) % cfg.TRAIN.SAVE_FREQ == 0:
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils_GAN.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+            utils.network_utils_GAN.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints2/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, generator, generator_solver,
-                                                 discriminator, discriminator_solver)
+                                                 discriminator, discriminator_solver, volume_scaler, image_scaler)
 
         # Output testing results
         mean_iou = []

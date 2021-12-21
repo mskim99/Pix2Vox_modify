@@ -3,6 +3,7 @@
 # Developed by Haozhe Xie <cshzxie@gmail.com>
 
 import torch
+import joblib
 
 from datetime import datetime as dt
 
@@ -27,7 +28,7 @@ def init_weights(m):
         torch.nn.init.constant_(m.bias, 0)
 
 
-def save_checkpoints(cfg, file_path, epoch_idx, generator, generator_solver, discriminator, discriminator_solver):
+def save_checkpoints(cfg, file_path, epoch_idx, generator, generator_solver, discriminator, discriminator_solver, volume_scaler, image_scaler):
     print('[INFO] %s Saving checkpoint to %s ...' % (dt.now(), file_path))
     checkpoint = {
         'epoch_idx': epoch_idx,
@@ -38,7 +39,8 @@ def save_checkpoints(cfg, file_path, epoch_idx, generator, generator_solver, dis
     }
 
     torch.save(checkpoint, file_path)
-
+    joblib.dump(volume_scaler, '/home/jzw/work/pix2vox/output/logs/checkpoints2/volume_scaler.pkl')
+    joblib.dump(image_scaler, '/home/jzw/work/pix2vox/output/logs/checkpoints2/image_scaler.pkl')
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters())

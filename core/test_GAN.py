@@ -22,17 +22,15 @@ from datetime import datetime as dt
 
 from models.generator import Generator
 
-import cv2
-import itertools
-from PIL import Image
-
-import utils.extract_amplify_features as uaf
+import joblib
 
 def test_net(cfg,
              epoch_idx=-1,
              test_data_loader=None,
              test_writer=None,
-             generator=None):
+             generator=None,
+             volume_scaler=None,
+             image_scaler=None):
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
     torch.backends.cudnn.benchmark = True
 
@@ -74,6 +72,10 @@ def test_net(cfg,
         epoch_idx = checkpoint['epoch_idx']
         generator.load_state_dict(checkpoint['generator_state_dict'])
 
+    if volume_scaler is None or image_scaler is None:
+        volume_scaler = joblib.load('/home/jzw/work/pix2vox/output/logs/checkpoints/volume_scaler.pkl')
+        image_scaler = joblib.load('/home/jzw/work/pix2vox/output/logs/checkpoints/image_scaler.pkl')
+
     # Set up loss functions
     bce_loss = torch.nn.BCEWithLogitsLoss()
     mse_loss = torch.nn.MSELoss()
@@ -99,12 +101,20 @@ def test_net(cfg,
         sample_name = sample_name[0]
 
         with torch.no_grad():
+
+            if volume_scaler is not None and image_scaler is not None:
+                ground_truth_volumes = volume_scaler.transform(ground_truth_volumes.reshape(-1, ground_truth_volumes.shape[-1])).reshape(ground_truth_volumes.shape)
+                rendering_images = image_scaler.transform(rendering_images.reshape(-1, rendering_images.shape[-1])).reshape(rendering_images.shape)
+
+                ground_truth_volumes = torch.from_numpy(ground_truth_volumes).type(torch.FloatTensor)
+                rendering_images = torch.from_numpy(rendering_images).type(torch.FloatTensor)
+            else:
+                ground_truth_volumes = ground_truth_volumes.float() / 255.
+                rendering_images = rendering_images / 255.
+
             # Get data from data loader
             rendering_images = utils.network_utils.var_or_cuda(rendering_images)
             ground_truth_volumes = utils.network_utils.var_or_cuda(ground_truth_volumes)
-
-            ground_truth_volumes = ground_truth_volumes.float() / 255.
-            rendering_images = rendering_images / 255.
 
             ground_truth_volumes = torch.squeeze(ground_truth_volumes)
 
@@ -136,9 +146,9 @@ def test_net(cfg,
             # Volume Visualization
             '''
             gv = gen_volumes.cpu().numpy()
-            np.save('/home/jzw/work/pix2vox/output/voxel_test/gv/gv_' + str(sample_idx).zfill(6) + '.npy', gv)
+            np.save('./output/voxel/gv/gv_' + str(sample_idx).zfill(6) + '.npy', gv)
             gtv = ground_truth_volumes.cpu().numpy()
-            np.save('/home/jzw/work/pix2vox/output/voxel_test/gtv/gtv_' + str(sample_idx).zfill(6) + '.npy', gtv)
+            np.save('./output/voxel/gtv/gtv_' + str(sample_idx).zfill(6) + '.npy', gtv)
             '''
 
             # IoU per sample

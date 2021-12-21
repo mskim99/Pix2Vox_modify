@@ -32,8 +32,8 @@ for j in range (50, 150, 50):
     print(str(j) + ' index ended')
     '''
 
-for i in range (0, 18):
-    x_save_load = np.load('J:/Program/Pix2Vox-master/voxel_log/211215_6_loss_GAN_test_epoch_400_G_1_D_linear_increase_10_r_img_8_L1_SSIM_4_IoU_drp_gen_e_0_375_dis_0_3_lr_1e-4_res_128/gv/gv_' + str(i).zfill(6) + '.npy')
+for i in range (0, 400):
+    x_save_load = np.load('J:/Program/Pix2Vox-master/voxel_log/211219_1_loss_GAN_train_epoch_0_400_G_1_D_linear_increase_10_r_img_3_L1_4_SSIM_2_IoU_0_3-0_5_drp_g_e_0_375_lr_5e-5_norm_res_128/gv/gv_' + str(i).zfill(6) + '.npy')
 
     imdata = vtk.vtkImageData()
 
@@ -45,10 +45,10 @@ for i in range (0, 18):
     imdata.SetOrigin([0, 0, 0])
     imdata.GetPointData().SetScalars(depthArray)
 
-    if not os.path.isdir('J:/Program/Pix2Vox-master/voxel_log/211215_6_loss_GAN_test_epoch_400_G_1_D_linear_increase_10_r_img_8_L1_SSIM_4_IoU_drp_gen_e_0_375_dis_0_3_lr_1e-4_res_128_mha'):
-        os.mkdir('J:/Program/Pix2Vox-master/voxel_log/211215_6_loss_GAN_test_epoch_400_G_1_D_linear_increase_10_r_img_8_L1_SSIM_4_IoU_drp_gen_e_0_375_dis_0_3_lr_1e-4_res_128_mha')
+    if not os.path.isdir('J:/Program/Pix2Vox-master/voxel_log/211219_1_loss_GAN_train_epoch_0_400_G_1_D_linear_increase_10_r_img_3_L1_4_SSIM_2_IoU_0_3-0_5_drp_g_e_0_375_lr_5e-5_norm_res_128_mha'):
+        os.mkdir('J:/Program/Pix2Vox-master/voxel_log/211219_1_loss_GAN_train_epoch_0_400_G_1_D_linear_increase_10_r_img_3_L1_4_SSIM_2_IoU_0_3-0_5_drp_g_e_0_375_lr_5e-5_norm_res_128_mha')
 
     writer = vtk.vtkMetaImageWriter()
-    writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/211215_6_loss_GAN_test_epoch_400_G_1_D_linear_increase_10_r_img_8_L1_SSIM_4_IoU_drp_gen_e_0_375_dis_0_3_lr_1e-4_res_128_mha/gv_' + str(i).zfill(6) + '.mha')
+    writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/211219_1_loss_GAN_train_epoch_0_400_G_1_D_linear_increase_10_r_img_3_L1_4_SSIM_2_IoU_0_3-0_5_drp_g_e_0_375_lr_5e-5_norm_res_128_mha/gv_' + str(i).zfill(6) + '.mha')
     writer.SetInputData(imdata)
     writer.Write()
