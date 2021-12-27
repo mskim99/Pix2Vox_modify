@@ -72,7 +72,7 @@ def main():
     # Set GPU to use
     # if type(cfg.CONST.DEVICE) == str:
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
     # Start train/test process
     if not args.test:

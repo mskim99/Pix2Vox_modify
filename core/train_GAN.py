@@ -34,8 +34,6 @@ import sys
 import math
 np.set_printoptions(threshold=sys.maxsize)
 
-from sklearn.preprocessing import MinMaxScaler
-
 def train_net(cfg):
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
     torch.backends.cudnn.benchmark = True
@@ -135,7 +133,7 @@ def train_net(cfg):
     # ce_loss = torch.nn.CrossEntropyLoss()
     mse_loss = torch.nn.MSELoss()
     l1_loss = torch.nn.L1Loss()
-    # smooth_l1_loss = torch.nn.SmoothL1Loss()
+    smooth_l1_loss = torch.nn.SmoothL1Loss()
     # huber_loss = torch.nn.HuberLoss(delta=0.5)
 
     # Load pretrained model if exists
@@ -181,7 +179,7 @@ def train_net(cfg):
         discriminator_losses = utils.network_utils_GAN.AverageMeter()
         dice_losses = utils.network_utils_GAN.AverageMeter()
         SSIM_losses = utils.network_utils_GAN.AverageMeter()
-        L1_losses = utils.network_utils_GAN.AverageMeter()
+        dist_losses = utils.network_utils_GAN.AverageMeter()
         iou_losses = utils.network_utils_GAN.AverageMeter()
 
         # switch models to training mode
@@ -198,23 +196,14 @@ def train_net(cfg):
         elif dis_batch > 10:
             dis_batch = 10
 
-        volume_scaler = MinMaxScaler()
-        image_scaler = MinMaxScaler()
-
         for batch_idx, (taxonomy_names, sample_names, rendering_images,
                         ground_truth_volumes, ground_truth_volumes_mesh) in enumerate(train_data_loader):
             taxonomy_name = taxonomy_names[0] if isinstance(taxonomy_names[0], str) else taxonomy_names[0].item()
             # Measure data time
             data_time.update(time() - batch_end_time)
 
-            ground_truth_volumes = volume_scaler.fit_transform(ground_truth_volumes.reshape(-1, ground_truth_volumes.shape[-1])).reshape(ground_truth_volumes.shape)
-            rendering_images = image_scaler.fit_transform(rendering_images.reshape(-1, rendering_images.shape[-1])).reshape(rendering_images.shape)
-
-            ground_truth_volumes = torch.from_numpy(ground_truth_volumes).type(torch.FloatTensor)
-            rendering_images = torch.from_numpy(rendering_images).type(torch.FloatTensor)
-
-            # ground_truth_volumes = ground_truth_volumes.float() / 255.
-            # rendering_images = rendering_images.float() / 255.
+            ground_truth_volumes = ground_truth_volumes.float() / 255.
+            rendering_images = rendering_images.float() / 255.
 
             # Get data from data loader
             ground_truth_volumes = utils.network_utils_GAN.var_or_cuda(ground_truth_volumes)
@@ -231,10 +220,11 @@ def train_net(cfg):
             if dis_update:
                 discriminator.zero_grad()
 
-            gen_volumes = generator(rendering_images).detach()
+            gen_volumes = generator(rendering_images, True).detach()
             dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
             L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
             L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
+            S_L1_loss = smooth_l1_loss(gen_volumes, ground_truth_volumes)
             SSIM_loss = utils.loss_function.ssim_loss_volume(gen_volumes, ground_truth_volumes)
             SSIM_loss = 0.5 - SSIM_loss
 
@@ -252,8 +242,8 @@ def train_net(cfg):
 
             discriminator_loss = - torch.mean(discriminator(ground_truth_volumes)) \
                                  + torch.mean(discriminator(gen_volumes))
-            discriminator_loss = discriminator_loss + 2. * L1_loss + 2. * SSIM_loss + 4 * iou_loss
-
+            discriminator_loss = discriminator_loss + 8. * L2_loss
+                        
             if dis_update:
                 if gen_update:
                     discriminator_loss.backward(retain_graph=True)
@@ -270,7 +260,7 @@ def train_net(cfg):
             if gen_update:
                 generator_solver.zero_grad()
 
-            gen_volumes = generator(rendering_images)
+            gen_volumes = generator(rendering_images, True)
             dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
             L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
             L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
@@ -290,7 +280,7 @@ def train_net(cfg):
             iou_loss = 0.5 - iou_loss
 
             generator_loss = -torch.mean(discriminator(gen_volumes))
-            generator_loss = generator_loss + 2. * L1_loss + 2. * SSIM_loss + 4 * iou_loss
+            generator_loss = generator_loss + 8. * L2_loss
 
             if gen_update:
                 generator_loss.backward()
@@ -304,7 +294,7 @@ def train_net(cfg):
             discriminator_losses.update(discriminator_loss_value)
             dice_losses.update(dice_loss.item())
             SSIM_losses.update(SSIM_loss.item())
-            L1_losses.update(L1_loss.item())
+            dist_losses.update(L2_loss.item())
             iou_losses.update(iou_loss)
 
             '''
@@ -347,9 +337,9 @@ def train_net(cfg):
             batch_time.update(time() - batch_end_time)
             batch_end_time = time()
             print(
-                '[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) GLoss = %.6f DLoss = %.6f IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f GU = %r DU = %r'
+                '[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) GLoss = %.6f DLoss = %.6f IoULoss = %.6f SSIMLoss = %.6f L2Loss = %.6f GU = %r DU = %r'
                 % (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, batch_idx + 1, n_batches, batch_time.val,
-                   data_time.val, generator_loss.item(), discriminator_loss.item(), iou_loss, SSIM_loss.item(), L1_loss.item(), gen_update, dis_update))
+                   data_time.val, generator_loss.item(), discriminator_loss.item(), iou_loss, SSIM_loss.item(), L2_loss.item(), gen_update, dis_update))
 
             # IoU per taxonomy
             if taxonomy_name not in test_iou:
@@ -359,10 +349,10 @@ def train_net(cfg):
 
             if batch_idx == 1:
                 gv = gen_volumes.detach().cpu().numpy()
-                np.save('/home/jzw/work/pix2vox/output/voxel2/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
+                np.save('./output/voxel2/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
 
                 gtv = ground_truth_volumes.cpu().numpy()
-                np.save('/home/jzw/work/pix2vox/output/voxel2/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
+                np.save('./output/voxel2/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
 
         # Append epoch loss to TensorBoard
         train_writer.add_scalar('Generator/EpochLoss', generator_losses.avg, epoch_idx + 1)
@@ -374,9 +364,9 @@ def train_net(cfg):
 
         # Tick / tock
         epoch_end_time = time()
-        print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) GLoss = %.8f DLoss = %.8f IoULoss = %.8f SSIMLoss = %.6f L1Loss = %.6f' %
+        print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) GLoss = %.8f DLoss = %.8f IoULoss = %.8f SSIMLoss = %.6f L2Loss = %.6f' %
               (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, epoch_end_time - epoch_start_time,
-               generator_losses.avg, discriminator_losses.avg, iou_losses.avg, SSIM_losses.avg, L1_losses.avg))
+               generator_losses.avg, discriminator_losses.avg, iou_losses.avg, SSIM_losses.avg, dist_losses.avg))
 
         # Update Rendering Views
         if cfg.TRAIN.UPDATE_N_VIEWS_RENDERING:
@@ -387,16 +377,16 @@ def train_net(cfg):
 
         # Validate the training models
         print('\n')
-        iou = test_net(cfg, epoch_idx + 1, val_data_loader, val_writer, generator, volume_scaler, image_scaler)
+        iou = test_net(cfg, epoch_idx + 1, val_data_loader, val_writer, generator)
 
         # Save weights to file
         if (epoch_idx + 1) % cfg.TRAIN.SAVE_FREQ == 0:
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils_GAN.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints2/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+            utils.network_utils_GAN.save_checkpoints(cfg, './output/logs/checkpoints2/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, generator, generator_solver,
-                                                 discriminator, discriminator_solver, volume_scaler, image_scaler)
+                                                 discriminator, discriminator_solver)
 
         # Output testing results
         mean_iou = []

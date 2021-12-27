@@ -8,6 +8,7 @@
 import gc
 import torch
 import torchvision.models
+import utils.network_utils_GAN
 
 
 class Generator(torch.nn.Module):
@@ -45,13 +46,13 @@ class Generator(torch.nn.Module):
             torch.nn.LeakyReLU(0.2, inplace=True),
             torch.nn.Dropout3d(p=0.375),
         )
-        ''' 
         self.e_layer6 = torch.nn.Sequential(
             torch.nn.Conv3d(1024, 2048, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm3d(2048),
             torch.nn.LeakyReLU(0.2, inplace=True),
             torch.nn.Dropout3d(p=0.375),
-        )    
+        )
+        '''      
         self.e_layer7 = torch.nn.Sequential(
             torch.nn.Conv3d(2048, 4096, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.LeakyReLU(0.2, inplace=True),
@@ -64,14 +65,14 @@ class Generator(torch.nn.Module):
             torch.nn.ConvTranspose3d(4096, 2048, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm3d(2048),
             torch.nn.ReLU(inplace=True),
-        )   
+        )  
+        '''
         self.d_layer0_2 = torch.nn.Sequential(
             torch.nn.ConvTranspose3d(2048, 1024, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm3d(1024),
             torch.nn.ReLU(inplace=True),
             # torch.nn.Dropout3d(p=0.25),
         )
-        '''
         self.d_layer1 = torch.nn.Sequential(
             torch.nn.ConvTranspose3d(1024, 512, kernel_size=4, stride=2, padding=1, bias=False),
             torch.nn.BatchNorm3d(512),
@@ -116,7 +117,7 @@ class Generator(torch.nn.Module):
         )
 
 
-    def forward(self, images):
+    def forward(self, images, train_rand):
 
         images = images.permute(1, 0, 3, 2, 4, 5).contiguous()
         images = torch.split(images, 1, dim=0)
@@ -133,22 +134,29 @@ class Generator(torch.nn.Module):
         # print(features.size()) # torch.Size([1, 512, 8, 8, 8])
         features = self.e_layer5(features)
         # print(features.size()) # torch.Size([1, 1024, 4, 4, 4])
-        # features = self.e_layer6(features)
+        features = self.e_layer6(features)
         # print(features.size()) # torch.Size([1, 2048, 2, 2, 2])
         '''
         features = self.e_layer7(features)
         # print(features.size()) # torch.Size([1, 4096, 1, 1, 1])
         '''
 
+        # Add Randomized Code (Reduce Over-fitting Problem)
+        if train_rand:
+            features = features.view(-1, 16384, 1, 1, 1)
+            # print(features.size()) # torch.Size([1, 2048, 2, 2, 2])
+            rand_code = torch.randn([1, 16384, 1, 1, 1])
+            rand_code = utils.network_utils_GAN.var_or_cuda(rand_code)
+            features = .9 * features + .1 * rand_code
+            features = features.view(-1, 2048, 2, 2, 2)
+
         '''
-        # gen_volume = self.linear(codes)
-        # gen_volume = gen_volume.view(-1, 1024, 4, 4, 4)
         gen_volume = self.d_layer0_1(features)
         # print(gen_volume.size()) # torch.Size([1, 2048, 2, 2, 2])    
         '''
-        # gen_volume = self.d_layer0_2(features)
+        gen_volume = self.d_layer0_2(features)
         # print(gen_volume.size()) # torch.Size([1, 1024, 4, 4, 4])
-        gen_volume = self.d_layer1(features)
+        gen_volume = self.d_layer1(gen_volume)
         # print(gen_volume.size()) # torch.Size([1, 512, 8, 8, 8])
         gen_volume = self.d_layer2(gen_volume)
         # print(gen_volume.size()) # torch.Size([1, 256, 16, 16, 16])

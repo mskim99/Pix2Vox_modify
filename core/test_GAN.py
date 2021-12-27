@@ -22,15 +22,11 @@ from datetime import datetime as dt
 
 from models.generator import Generator
 
-import joblib
-
 def test_net(cfg,
              epoch_idx=-1,
              test_data_loader=None,
              test_writer=None,
-             generator=None,
-             volume_scaler=None,
-             image_scaler=None):
+             generator=None):
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
     torch.backends.cudnn.benchmark = True
 
@@ -72,22 +68,18 @@ def test_net(cfg,
         epoch_idx = checkpoint['epoch_idx']
         generator.load_state_dict(checkpoint['generator_state_dict'])
 
-    if volume_scaler is None or image_scaler is None:
-        volume_scaler = joblib.load('/home/jzw/work/pix2vox/output/logs/checkpoints/volume_scaler.pkl')
-        image_scaler = joblib.load('/home/jzw/work/pix2vox/output/logs/checkpoints/image_scaler.pkl')
-
     # Set up loss functions
     bce_loss = torch.nn.BCEWithLogitsLoss()
     mse_loss = torch.nn.MSELoss()
     # ce_loss = torch.nn.CrossEntropyLoss()
     l1_loss = torch.nn.L1Loss()
-    # smooth_l1_loss = torch.nn.SmoothL1Loss()
+    smooth_l1_loss = torch.nn.SmoothL1Loss()
     # huber_loss = torch.nn.HuberLoss(delta=0.5)
 
     # Testing loop
     n_samples = len(test_data_loader)
     test_iou = dict()
-    L1_losses = utils.network_utils_GAN.AverageMeter()
+    dist_losses = utils.network_utils_GAN.AverageMeter()
     dice_losses = utils.network_utils_GAN.AverageMeter()
     SSIM_losses = utils.network_utils_GAN.AverageMeter()
     iou_losses = utils.network_utils_GAN.AverageMeter()
@@ -102,15 +94,8 @@ def test_net(cfg,
 
         with torch.no_grad():
 
-            if volume_scaler is not None and image_scaler is not None:
-                ground_truth_volumes = volume_scaler.transform(ground_truth_volumes.reshape(-1, ground_truth_volumes.shape[-1])).reshape(ground_truth_volumes.shape)
-                rendering_images = image_scaler.transform(rendering_images.reshape(-1, rendering_images.shape[-1])).reshape(rendering_images.shape)
-
-                ground_truth_volumes = torch.from_numpy(ground_truth_volumes).type(torch.FloatTensor)
-                rendering_images = torch.from_numpy(rendering_images).type(torch.FloatTensor)
-            else:
-                ground_truth_volumes = ground_truth_volumes.float() / 255.
-                rendering_images = rendering_images / 255.
+            ground_truth_volumes = ground_truth_volumes.float() / 255.
+            rendering_images = rendering_images / 255.
 
             # Get data from data loader
             rendering_images = utils.network_utils.var_or_cuda(rendering_images)
@@ -119,15 +104,16 @@ def test_net(cfg,
             ground_truth_volumes = torch.squeeze(ground_truth_volumes)
 
             # Train Generator
-            gen_volumes = generator(rendering_images)
+            gen_volumes = generator(rendering_images, False)
             dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
             L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
             L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
+            S_L1_loss = smooth_l1_loss(gen_volumes, ground_truth_volumes)
             SSIM_loss = utils.loss_function.ssim_loss_volume(gen_volumes, ground_truth_volumes)
             SSIM_loss = 0.5 - SSIM_loss
 
             sample_iou = []
-            for th in [.3, .4, .5]:
+            for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(gen_volumes, th).float()
                 _gt_volume = torch.ge(ground_truth_volumes, th).float()
                 intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
@@ -138,7 +124,7 @@ def test_net(cfg,
             iou_loss = 0.5 - iou_loss
 
             # Append loss to average metrics
-            L1_losses.update(L1_loss.item())
+            dist_losses.update(L2_loss.item())
             dice_losses.update(dice_loss.item())
             SSIM_losses.update(SSIM_loss.item())
             iou_losses.update(iou_loss)
@@ -166,11 +152,11 @@ def test_net(cfg,
             test_iou[taxonomy_id]['n_samples'] += 1
             test_iou[taxonomy_id]['iou'].append(sample_iou)
 
-            print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f'
-                  % (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, iou_loss, SSIM_loss.item(), L1_loss.item()))
+            print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s IoULoss = %.6f SSIMLoss = %.6f L2Loss = %.6f'
+                  % (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, iou_loss, SSIM_loss.item(), L2_loss.item()))
 
-    print('[INFO] %s Test[%d] Loss Mean / IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f'
-          % (dt.now(), n_samples, iou_losses.avg, SSIM_losses.avg, L1_losses.avg))
+    print('[INFO] %s Test[%d] Loss Mean / IoULoss = %.6f SSIMLoss = %.6f L2Loss = %.6f'
+          % (dt.now(), n_samples, iou_losses.avg, SSIM_losses.avg, dist_losses.avg))
 
     # Output testing results
     mean_iou = []
@@ -205,7 +191,7 @@ def test_net(cfg,
     if test_writer is not None:
         test_writer.add_scalar('Generator/DiceLoss', dice_losses.avg, epoch_idx)
         test_writer.add_scalar('Generator/SSIMLoss', SSIM_losses.avg, epoch_idx)
-        test_writer.add_scalar('Generator/L1Loss', L1_losses.avg, epoch_idx)
+        test_writer.add_scalar('Generator/DistLoss', dist_losses.avg, epoch_idx)
 
     return test_iou[taxonomy_id]['iou'][2] # t = 0.40
     # return min_loss

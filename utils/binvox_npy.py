@@ -30,14 +30,14 @@ for i in range (1, 56):
         writer.Write()
         '''
 
-with open('J:/DK_Data_Process/i_1-3_Target_Mesh/24_spine/res_32_rot_yx_90_y_90_prc_sc_fill/f_001_vrt_24.binvox', 'rb') as f:
+with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x_128_low_clip_thr_0_36/gtv_f_001_a.binvox', 'rb') as f:
     model = binvox_rw.read_as_3d_array(f)
 
 data = model.data
 
 imdata = vtk.vtkImageData()
 # this is where the conversion happens
-depthArray = numpy_support.numpy_to_vtk(data.ravel(order='F'), deep=3, array_type=vtk.VTK_INT)
+depthArray = numpy_support.numpy_to_vtk(data.ravel(order='C'), deep=3, array_type=vtk.VTK_INT)
 
 # fill the vtk image data object
 imdata.SetDimensions([32, 32, 32])
@@ -46,7 +46,7 @@ imdata.SetOrigin([0, 0, 0])
 imdata.GetPointData().SetScalars(depthArray)
 
 writer = vtk.vtkMetaImageWriter()
-writer.SetFileName('J:/DK_Data_Process/i_1-3_Target_Mesh/24_spine/res_32_rot_yx_90_y_90_prc_sc_fill/f_001_vrt_24.mha')
+writer.SetFileName('J:/Program/Pix2Vox-master/voxel_gtv_log/mha/x_128_low_clip_thr_0_36/f_001_vrt_24.mha')
 writer.SetInputData(imdata)
 writer.Write()
 
