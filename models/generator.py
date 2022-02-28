@@ -115,6 +115,23 @@ class Generator(torch.nn.Module):
             torch.nn.Sigmoid(),
         )
 
+        # Resolution 256
+        '''
+        self.d_layer5 = torch.nn.Sequential(
+            torch.nn.ConvTranspose3d(64, 32, kernel_size=4, stride=2, padding=1, bias=False),
+            torch.nn.BatchNorm3d(32),
+            torch.nn.ReLU(inplace=True),
+        )
+        self.d_layer6 = torch.nn.Sequential(
+            torch.nn.ConvTranspose3d(32, 16, kernel_size=4, stride=2, padding=1, bias=False),
+            torch.nn.BatchNorm3d(16),
+            torch.nn.ReLU(inplace=True),
+        )
+        self.d_layer7 = torch.nn.Sequential(
+            torch.nn.ConvTranspose3d(16, 1, kernel_size=1, bias=False),
+            torch.nn.Sigmoid(),
+        )
+        '''
 
     def forward(self, images):
 
@@ -159,7 +176,9 @@ class Generator(torch.nn.Module):
         gen_volume = self.d_layer5(gen_volume)
         # print(gen_volume.size()) # torch.Size([1, 32, 128, 128, 128])
         gen_volume = self.d_layer6(gen_volume)
-        # print(gen_volume.size()) # torch.Size([1, 1, 128, 128, 128])
+        # print(gen_volume.size()) # torch.Size([1, 16, 256, 256, 256])
+        # gen_volume = self.d_layer7(gen_volume)
+        # print(gen_volume.size()) # torch.Size([1, 1, 256, 256, 256])
         gen_volume = torch.squeeze(gen_volume)
 
         return gen_volume

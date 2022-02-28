@@ -10,10 +10,10 @@ import math
 from vtk.util import numpy_support
 import vtk
 
-res = 128
+res = 256
 
 for i in range (1, 58):
-    image_paths = glob.glob('J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume/KISTI_Rendering/00000024/m_' + str(i).zfill(7) + '/rendering/a*.png')
+    image_paths = glob.glob('J:/Program/Pix2Vox-master/Pix2Vox-master/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/00000024/f_' + str(i).zfill(7) + '/rendering/a*.png')
     if len(image_paths) > 0:
 
         print('f ' + str(i) + ' exist')
@@ -54,7 +54,7 @@ for i in range (1, 58):
         res_volume = res_volume.swapaxes(0, 2)
 
         voxels = binvox_rw.from_array(res_volume, [res, res, res], [0.0, 0.0, 0.0], 1, fix_coords=True)
-        with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x_128/gtv_m_' + str(i).zfill(7) + '_a.binvox', 'wb') as f:
+        with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x_256/gtv_f_' + str(i).zfill(7) + '_a.binvox', 'wb') as f:
             voxels.write(f)
 '''
 for i in range(0, 58):

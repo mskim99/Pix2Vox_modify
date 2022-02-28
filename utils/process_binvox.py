@@ -4,7 +4,7 @@ import numpy as np
 import math
 import cv2
 
-res = 64
+res = 128
 
 def cal_bb(type, bb_data):
     len_value = 0
@@ -31,9 +31,9 @@ def cal_bb(type, bb_data):
 
 
 for i in range(1, 58):
-    image_paths = glob.glob('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x_64/gtv_f_' + str(i).zfill(7) + '_a.binvox')
+    image_paths = glob.glob('J:/DK_Data_Process/i_1-3_Target_Mesh/23_24_spine/res_128/f_' + str(i).zfill(3) + '_vrt_23_24_res_128.binvox')
     if len(image_paths) > 0:
-        with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x_64/gtv_f_' + str(i).zfill(7) + '_a.binvox', 'rb') as f:
+        with open('J:/DK_Data_Process/i_1-3_Target_Mesh/23_24_spine/res_128/f_' + str(i).zfill(3) + '_vrt_23_24_res_128.binvox', 'rb') as f:
             model = binvox_rw.read_as_3d_array(f)
         data = model.data
 
@@ -43,20 +43,18 @@ for i in range(1, 58):
 
         res_volume = np.zeros((res, res, res), dtype=np.uint8)
 
-        # scale to fit (32x32x32)
-        '''
-        if x_len < 32:
-            for j in range(0, 32):
-                res_volume[j, :, :] = data[round(float(j) * float(x_len) / 32.), :, :] * 255
+        # scale to fit
+        if x_len < res:
+            for j in range(0, res):
+                res_volume[j, :, :] = data[round(float(j) * float(x_len) / float(res)), :, :] * 255
 
-        if y_len < 32:
-            for j in range(0, 32):
-                res_volume[:, j, :] = data[:, round(float(j) * float(y_len) / 32.), :] * 255
+        if y_len < res:
+            for j in range(0, res):
+                res_volume[:, j, :] = data[:, round(float(j) * float(y_len) / float(res)), :] * 255
 
-        if z_len < 32:
-            for j in range(0, 32):
-                res_volume[:, :, j] = data[:, :, round(float(j) * float(z_len) / 32.)] * 255
-                '''
+        if z_len < res:
+            for j in range(0, res):
+                res_volume[:, :, j] = data[:, :, round(float(j) * float(z_len) / float(res))] * 255
 
         # Fill Inside
         '''
@@ -75,15 +73,17 @@ for i in range(1, 58):
             '''
 
         # Thresholding
+        '''
         remain_pos = np.where(data[:, :, :] >= 89)
         remove_pos = np.where(data[:, :, :] < 89)
         res_volume[remain_pos] = 255
         res_volume[remove_pos] = 0
+        '''
 
         res_volume = res_volume.swapaxes(1, 2)
 
         voxels = binvox_rw.from_array(res_volume, [res, res, res], [0.0, 0.0, 0.0], 1, fix_coords=True)
-        with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x_64_thres_0_35/gtv_f_' + str(i).zfill(3) + '_a.binvox', 'wb') as f:
+        with open('J:/DK_Data_Process/i_1-3_Target_Mesh/23_24_spine/res_128_fit/f_' + str(i).zfill(3) + '_vrt_23_24_res_128.binvox', 'wb') as f:
             voxels.write(f)
 
         print(str(i) + ' finished')

@@ -1,6 +1,8 @@
 import torch
 import utils.network_utils
 import math
+from torch import autograd
+from torch.autograd import Variable
 
 from IQA_pytorch import SSIM
 
@@ -101,8 +103,10 @@ def dice_loss_weight(gv, gtv, thres_min, thres_max, smooth = 1e-5):
 
 
 def ssim_loss_volume(gv, gtv):
-    SSIM_loss = SSIM(channels=1)
+    SSIM_loss = SSIM(channels=3)
     loss_total = 0.0
+    gv = torch.squeeze(gv)
+    gtv = torch.squeeze(gtv)
     for i in range (0, gv.shape[2]):
         gv_part = gv[:, :, i]
         gtv_part = gtv[:, :, i]
@@ -144,3 +148,24 @@ ls_loss_value = 100. * ls_loss(test_gv, test_gtv, 0.5, 1.)
 
 print(ls_loss_value.item())
 '''
+
+
+def calc_gradient_penalty(netD, real_data, fake_data):
+    alpha = torch.rand(real_data.size(0), 1, 1, 1, 1)
+    alpha = alpha.expand(real_data.size())
+
+    alpha = alpha.cuda()
+
+    interpolates = alpha * real_data + ((1 - alpha) * fake_data)
+
+    interpolates = interpolates.cuda()
+    interpolates = Variable(interpolates, requires_grad=True)
+
+    disc_interpolates = netD(interpolates)
+
+    gradients = autograd.grad(outputs=disc_interpolates, inputs=interpolates,
+                              grad_outputs=torch.ones(disc_interpolates.size()).cuda(),
+                              create_graph=True, retain_graph=True, only_inputs=True)[0]
+
+    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * 10.
+    return gradient_penalty

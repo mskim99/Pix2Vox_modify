@@ -4,13 +4,12 @@ import sys
 import math
 import cv2
 np.set_printoptions(threshold=sys.maxsize)
-'''
-with open('J:/Program/Pix2Vox-master/voxel_gtv_log/binvox/x2/gtv_f_0000001_a_cv.binvox', 'rb') as f:
-    model = binvox_rw.read_as_3d_array(f)
-    '''
-'''
-data = model.data
 
+with open('J:/program/Pix2Vox-origin/datasets/KISTI_volume_CT_mesh_sc128_outer_ct/KISTI_Vox/00000024/f_0000001/model.binvox', 'rb') as f:
+    model = binvox_rw.read_as_3d_array(f)
+
+data = model.data
+'''
 x_len = -1
 y_len = -1
 z_len = -1
@@ -39,11 +38,11 @@ def cal_bb(type):
     return 32
 '''
 
-data = np.load('J:/Program/Pix2Vox-master/voxel_log/voxel_process/gv_000249.npy')
+# data = np.load('J:/Program/Pix2Vox-master/voxel_log/voxel_process/gv_000249.npy')
 
-for i in range(0, 31):
-    for j in range(0, 31):
-        sys.stdout.write(str(data[18, i, j]))
+for i in range(0, 127):
+    for j in range(0, 127):
+        sys.stdout.write(str(data[63, i, j]))
         sys.stdout.write(' ')
     print('')
 print('')

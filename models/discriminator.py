@@ -74,7 +74,9 @@ class Discriminator(torch.nn.Module):
         features = self.layer4(features)
         # print(features.size()) # torch.Size([1, 512, 4, 4, 4])
         features = features.view(-1, 512 * 4 * 4 * 4)
+        # print(features.size()) # torch.Size([1, 1])
         features = self.layer5(features)
+        # print(features.size())
         # print(features.size()) # torch.Size([1, 1])
         '''
         features = self.layer6(features)

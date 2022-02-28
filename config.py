@@ -23,20 +23,20 @@ __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/Shapenet/ShapeNetVox32
 '''
 
 # ShapeNet Modified (jzw)
+'''
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = '/home/jzw/work/pix2vox/datasets/KISTI.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
-__C.DATASETS.SHAPENET.RENDERING_VIEWS        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/%s/%s/rendering/views.txt'
-__C.DATASETS.SHAPENET.VOXEL_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Vox/%s/%s/model.binvox'
-__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Vox_BD/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.RENDERING_PATH        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128_23_24/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
+__C.DATASETS.SHAPENET.RENDERING_VIEWS        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128_23_24/KISTI_Rendering/%s/%s/rendering/views.txt'
+__C.DATASETS.SHAPENET.VOXEL_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128_23_24/KISTI_Vox/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128_23_24/KISTI_Vox_BD/%s/%s/model.binvox'
+'''
 
 # ShapeNet Modified (AI Server)
-'''
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI.json'
 __C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
 __C.DATASETS.SHAPENET.RENDERING_VIEWS        = './datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/%s/%s/rendering/views.txt'
 __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume_CT_mesh_sc128/KISTI_Vox/%s/%s/model.binvox'
 __C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = './datasets/KISTI_volume_CT_mesh_sc128/KISTI_Vox_BD/%s/%s/model.binvox'
-'''
 
 __C.DATASETS.PASCAL3D                       = edict()
 __C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'
@@ -124,4 +124,5 @@ __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
 #
 __C.TEST                                    = edict()
 __C.TEST.RANDOM_BG_COLOR_RANGE              = [[240, 240], [240, 240], [240, 240]]
+# __C.TEST.VOXEL_THRESH                       = [.2, .3, .4, .5]
 __C.TEST.VOXEL_THRESH                       = [.2, .3, .4, .5]

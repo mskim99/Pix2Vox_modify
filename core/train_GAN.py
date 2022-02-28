@@ -26,8 +26,8 @@ from tensorboardX import SummaryWriter
 from time import time
 
 from core.test_GAN import test_net
-from models.generator import Generator
-from models.discriminator import Discriminator
+from models.generator_WGAN import Generator
+from models.discriminator_WGAN import Discriminator
 
 import numpy as np
 import sys
@@ -85,8 +85,14 @@ def train_net(cfg):
     taxonomies = {t['taxonomy_id']: t for t in taxonomies}
 
     # Set up networks
+    '''
     generator = Generator(cfg)
     discriminator = Discriminator(cfg)
+    '''
+
+    generator = Generator()
+    discriminator = Discriminator()
+
     print('[DEBUG] %s Parameters in Generator : %d.' % (dt.now(), utils.network_utils_GAN.count_parameters(generator)))
     print('[DEBUG] %s Parameters in Discriminator: %d.' % (dt.now(), utils.network_utils_GAN.count_parameters(discriminator)))
 
@@ -192,11 +198,17 @@ def train_net(cfg):
         test_iou = dict()
         n_batches = len(train_data_loader)
 
+        # Proposed Network
+        '''
         dis_batch = math.floor((epoch_idx + 6) / 10)
         if dis_batch < 1:
             dis_batch = 1
         elif dis_batch > 10:
             dis_batch = 10
+        '''
+
+        # Existing Network
+        dis_batch = 5
 
         volume_scaler = MinMaxScaler()
         image_scaler = MinMaxScaler()
@@ -219,6 +231,7 @@ def train_net(cfg):
             # Get data from data loader
             ground_truth_volumes = utils.network_utils_GAN.var_or_cuda(ground_truth_volumes)
             rendering_images = utils.network_utils_GAN.var_or_cuda(rendering_images)
+            noise = torch.randn((1, 1000, 1, 1, 1)).cuda()
 
             ground_truth_volumes = torch.squeeze(ground_truth_volumes)
 
@@ -231,7 +244,15 @@ def train_net(cfg):
             if dis_update:
                 discriminator.zero_grad()
 
-            gen_volumes = generator(rendering_images).detach()
+            # Proposed GAN Network
+            # gen_volumes = generator(rendering_images).detach()
+
+            # Existing GAN Network
+            gen_volumes = generator(noise).detach()
+
+            ground_truth_volumes = torch.clamp(ground_truth_volumes, 0.0, 1.0)
+            gen_volumes = torch.clamp(gen_volumes, 0.0, 1.0)
+
             dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
             L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
             L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
@@ -250,9 +271,21 @@ def train_net(cfg):
             iou_loss = sum(sample_iou) / len(sample_iou)
             iou_loss = 0.5 - iou_loss
 
+            # Proposed GAN Network
+            '''
             discriminator_loss = - torch.mean(discriminator(ground_truth_volumes)) \
                                  + torch.mean(discriminator(gen_volumes))
-            discriminator_loss = discriminator_loss + 2. * L1_loss + 2. * SSIM_loss + 4 * iou_loss
+            
+            discriminator_loss = discriminator_loss + 4. * L1_loss
+            '''
+
+            # Existing GAN Network
+            ground_truth_volumes = ground_truth_volumes.view(1, 1, 128, 128, 128)
+            gen_volumes = gen_volumes.view(1, 1, 128, 128, 128)
+            discriminator_loss = - torch.mean(discriminator(ground_truth_volumes)) \
+                                 + torch.mean(discriminator(gen_volumes))
+            gradient_penalty = utils.loss_function.calc_gradient_penalty(discriminator, ground_truth_volumes.data, gen_volumes.data)
+            discriminator_loss = discriminator_loss + gradient_penalty
 
             if dis_update:
                 if gen_update:
@@ -270,7 +303,7 @@ def train_net(cfg):
             if gen_update:
                 generator_solver.zero_grad()
 
-            gen_volumes = generator(rendering_images)
+            # gen_volumes = generator(rendering_images)
             dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
             L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
             L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
@@ -286,11 +319,12 @@ def train_net(cfg):
                 union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
                 sample_iou.append((intersection / union).item())
 
+
             iou_loss = sum(sample_iou) / len(sample_iou)
             iou_loss = 0.5 - iou_loss
 
             generator_loss = -torch.mean(discriminator(gen_volumes))
-            generator_loss = generator_loss + 2. * L1_loss + 2. * SSIM_loss + 4 * iou_loss
+            generator_loss = generator_loss + 4. * L1_loss
 
             if gen_update:
                 generator_loss.backward()
@@ -356,13 +390,14 @@ def train_net(cfg):
                 test_iou[taxonomy_name] = {'n_samples': 0, 'iou': []}
             test_iou[taxonomy_name]['n_samples'] += 1
             test_iou[taxonomy_name]['iou'].append(sample_iou)
-
+            '''
             if batch_idx == 1:
                 gv = gen_volumes.detach().cpu().numpy()
-                np.save('/home/jzw/work/pix2vox/output/voxel2/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
+                np.save('/home/jzw/work/pix2vox/output/voxel/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
 
                 gtv = ground_truth_volumes.cpu().numpy()
-                np.save('/home/jzw/work/pix2vox/output/voxel2/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
+                np.save('/home/jzw/work/pix2vox/output/voxel/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
+            '''
 
         # Append epoch loss to TensorBoard
         train_writer.add_scalar('Generator/EpochLoss', generator_losses.avg, epoch_idx + 1)
@@ -394,7 +429,7 @@ def train_net(cfg):
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils_GAN.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints2/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+            utils.network_utils_GAN.save_checkpoints(cfg, './output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, generator, generator_solver,
                                                  discriminator, discriminator_solver, volume_scaler, image_scaler)
 

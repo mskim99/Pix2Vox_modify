@@ -73,8 +73,8 @@ def test_net(cfg,
         generator.load_state_dict(checkpoint['generator_state_dict'])
 
     if volume_scaler is None or image_scaler is None:
-        volume_scaler = joblib.load('/home/jzw/work/pix2vox/output/logs/checkpoints/volume_scaler.pkl')
-        image_scaler = joblib.load('/home/jzw/work/pix2vox/output/logs/checkpoints/image_scaler.pkl')
+        volume_scaler = joblib.load('./output/logs/checkpoints2/volume_scaler.pkl')
+        image_scaler = joblib.load('./output/logs/checkpoints2/image_scaler.pkl')
 
     # Set up loss functions
     bce_loss = torch.nn.BCEWithLogitsLoss()
@@ -118,16 +118,24 @@ def test_net(cfg,
 
             ground_truth_volumes = torch.squeeze(ground_truth_volumes)
 
-            # Train Generator
-            gen_volumes = generator(rendering_images)
+            # Proposed GAN Network
+            # gen_volumes = generator(rendering_images)
+
+            # Existing GAN Network
+            noise = torch.randn((1, 1000, 1, 1, 1)).cuda()
+            gen_volumes = generator(noise)
+
+            ground_truth_volumes = torch.clamp(ground_truth_volumes, 0.0, 1.0)
+            gen_volumes = torch.clamp(gen_volumes, 0.0, 1.0)
+
             dice_loss = utils.loss_function.dice_loss(gen_volumes, ground_truth_volumes, 0.29)
             L2_loss = mse_loss(gen_volumes, ground_truth_volumes)
             L1_loss = l1_loss(gen_volumes, ground_truth_volumes)
             SSIM_loss = utils.loss_function.ssim_loss_volume(gen_volumes, ground_truth_volumes)
-            SSIM_loss = 0.5 - SSIM_loss
+            # SSIM_loss = 0.5 - SSIM_loss
 
             sample_iou = []
-            for th in [.3, .4, .5]:
+            for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(gen_volumes, th).float()
                 _gt_volume = torch.ge(ground_truth_volumes, th).float()
                 intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
@@ -144,21 +152,10 @@ def test_net(cfg,
             iou_losses.update(iou_loss)
 
             # Volume Visualization
-            '''
-            gv = gen_volumes.cpu().numpy()
-            np.save('./output/voxel/gv/gv_' + str(sample_idx).zfill(6) + '.npy', gv)
+            gv = gen_volumes.cpu().numpy()            
+            np.save('./output/voxel2/gv/gv_' + str(sample_idx).zfill(6) + '.npy', gv)
             gtv = ground_truth_volumes.cpu().numpy()
-            np.save('./output/voxel/gtv/gtv_' + str(sample_idx).zfill(6) + '.npy', gtv)
-            '''
-
-            # IoU per sample
-            sample_iou = []
-            for th in cfg.TEST.VOXEL_THRESH:
-                _volume = torch.ge(gen_volumes, th).float()
-                _gt_volume = torch.ge(ground_truth_volumes, th).float()
-                intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
-                union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
-                sample_iou.append((intersection / union).item())
+            np.save('./output/voxel2/gtv/gtv_' + str(sample_idx).zfill(6) + '.npy', gtv)
 
             # IoU per taxonomy
             if taxonomy_id not in test_iou:
@@ -166,8 +163,9 @@ def test_net(cfg,
             test_iou[taxonomy_id]['n_samples'] += 1
             test_iou[taxonomy_id]['iou'].append(sample_iou)
 
-            print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f'
-                  % (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, iou_loss, SSIM_loss.item(), L1_loss.item()))
+            print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f IoU = %s'
+                  % (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, iou_loss, SSIM_loss.item(), L1_loss.item(),
+                     ['%.4f' % si for si in sample_iou]))
 
     print('[INFO] %s Test[%d] Loss Mean / IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f'
           % (dt.now(), n_samples, iou_losses.avg, SSIM_losses.avg, L1_losses.avg))

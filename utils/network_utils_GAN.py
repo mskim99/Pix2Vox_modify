@@ -39,8 +39,8 @@ def save_checkpoints(cfg, file_path, epoch_idx, generator, generator_solver, dis
     }
 
     torch.save(checkpoint, file_path)
-    joblib.dump(volume_scaler, '/home/jzw/work/pix2vox/output/logs/checkpoints2/volume_scaler.pkl')
-    joblib.dump(image_scaler, '/home/jzw/work/pix2vox/output/logs/checkpoints2/image_scaler.pkl')
+    joblib.dump(volume_scaler, './output/logs/checkpoints/volume_scaler.pkl')
+    joblib.dump(image_scaler, './output/logs/checkpoints/image_scaler.pkl')
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters())

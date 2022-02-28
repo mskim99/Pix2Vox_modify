@@ -9,6 +9,7 @@ import multiprocessing as mp
 import numpy as np
 import os
 import sys
+import warnings
 # Fix problem: no $DISPLAY environment variable
 matplotlib.use('Agg')
 
@@ -72,7 +73,10 @@ def main():
     # Set GPU to use
     # if type(cfg.CONST.DEVICE) == str:
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
 
     # Start train/test process
     if not args.test:
