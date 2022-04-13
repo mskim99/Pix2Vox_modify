@@ -84,6 +84,8 @@ def train_net(cfg):
         taxonomies = json.loads(file.read())
     taxonomies = {t['taxonomy_id']: t for t in taxonomies}
 
+    print('[STATE] iou 2.0 lr 1e-4 checkpoint 4')
+
     # Set up networks
     generator = Generator(cfg)
     discriminator = Discriminator(cfg)
@@ -240,6 +242,7 @@ def train_net(cfg):
 
             # IoU per sample
             sample_iou = []
+            # weights = [1.2, 1.4, 1.6, 1.8]
             for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(gen_volumes, th).float()
                 _gt_volume = torch.ge(ground_truth_volumes, th).float()
@@ -247,12 +250,13 @@ def train_net(cfg):
                 union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
                 sample_iou.append((intersection / union).item())
 
+            # sample_iou = np.multiply(sample_iou, weights)
             iou_loss = sum(sample_iou) / len(sample_iou)
             iou_loss = 0.5 - iou_loss
 
             discriminator_loss = - torch.mean(discriminator(ground_truth_volumes)) \
                                  + torch.mean(discriminator(gen_volumes))
-            discriminator_loss = discriminator_loss + 2. * L1_loss + 2. * SSIM_loss + 4 * iou_loss
+            discriminator_loss = discriminator_loss + 4. * L1_loss # + 4. * SSIM_loss + 2. * iou_loss
 
             if dis_update:
                 if gen_update:
@@ -286,11 +290,13 @@ def train_net(cfg):
                 union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
                 sample_iou.append((intersection / union).item())
 
+            # sample_iou = np.multiply(sample_iou, weights)
             iou_loss = sum(sample_iou) / len(sample_iou)
             iou_loss = 0.5 - iou_loss
+            # sample_iou = np.divide(sample_iou, weights)
 
             generator_loss = -torch.mean(discriminator(gen_volumes))
-            generator_loss = generator_loss + 2. * L1_loss + 2. * SSIM_loss + 4 * iou_loss
+            generator_loss = generator_loss + 4. * L1_loss # + 4. * SSIM_loss + 2. * iou_loss
 
             if gen_update:
                 generator_loss.backward()
@@ -356,13 +362,14 @@ def train_net(cfg):
                 test_iou[taxonomy_name] = {'n_samples': 0, 'iou': []}
             test_iou[taxonomy_name]['n_samples'] += 1
             test_iou[taxonomy_name]['iou'].append(sample_iou)
-
+            '''
             if batch_idx == 1:
                 gv = gen_volumes.detach().cpu().numpy()
                 np.save('/home/jzw/work/pix2vox/output/voxel2/gv/gv_' + str(epoch_idx).zfill(6) + '.npy', gv)
 
                 gtv = ground_truth_volumes.cpu().numpy()
                 np.save('/home/jzw/work/pix2vox/output/voxel2/gtv/gtv_' + str(epoch_idx).zfill(6) + '.npy', gtv)
+                '''
 
         # Append epoch loss to TensorBoard
         train_writer.add_scalar('Generator/EpochLoss', generator_losses.avg, epoch_idx + 1)
@@ -394,7 +401,7 @@ def train_net(cfg):
             if not os.path.exists(ckpt_dir):
                 os.makedirs(ckpt_dir)
 
-            utils.network_utils_GAN.save_checkpoints(cfg, '/home/jzw/work/pix2vox/output/logs/checkpoints2/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
+            utils.network_utils_GAN.save_checkpoints(cfg, './output/logs/checkpoints/ckpt-epoch-%04d.pth' % (epoch_idx + 1),
                                                  epoch_idx + 1, generator, generator_solver,
                                                  discriminator, discriminator_solver, volume_scaler, image_scaler)
 

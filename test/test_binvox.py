@@ -39,15 +39,16 @@ def cal_bb(type):
     return 32
 '''
 
-data = np.load('J:/Program/Pix2Vox-master/voxel_log/voxel_process/gv_000249.npy')
-
+data = np.load('J:/Program/Pix2Vox-master/voxel_log/voxel_process/gv_value_0_2_res_128.npy')
+print(data[32, 32, :])
+'''
 for i in range(0, 31):
     for j in range(0, 31):
         sys.stdout.write(str(data[18, i, j]))
         sys.stdout.write(' ')
     print('')
 print('')
-
+'''
 '''
 filled_arr = np.zeros([32, 32, 32])
 

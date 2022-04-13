@@ -23,20 +23,21 @@ __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/Shapenet/ShapeNetVox32
 '''
 
 # ShapeNet Modified (jzw)
+'''
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = '/home/jzw/work/pix2vox/datasets/KISTI.json'
 __C.DATASETS.SHAPENET.RENDERING_PATH        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
 __C.DATASETS.SHAPENET.RENDERING_VIEWS        = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/%s/%s/rendering/views.txt'
 __C.DATASETS.SHAPENET.VOXEL_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Vox/%s/%s/model.binvox'
 __C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = '/home/jzw/work/pix2vox/datasets/KISTI_volume_CT_mesh_sc128/KISTI_Vox_BD/%s/%s/model.binvox'
+'''
 
 # ShapeNet Modified (AI Server)
-'''
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/KISTI.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
-__C.DATASETS.SHAPENET.RENDERING_VIEWS        = './datasets/KISTI_volume_CT_mesh_sc128/KISTI_Rendering/%s/%s/rendering/views.txt'
-__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume_CT_mesh_sc128/KISTI_Vox/%s/%s/model.binvox'
-__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = './datasets/KISTI_volume_CT_mesh_sc128/KISTI_Vox_BD/%s/%s/model.binvox'
-'''
+__C.DATASETS.SHAPENET.RENDERING_PATH        = './datasets/KISTI_volume_CT_mesh_sc128_lol2/KISTI_Rendering/%s/%s/rendering/%s%03d.png'
+__C.DATASETS.SHAPENET.RENDERING_VIEWS        = './datasets/KISTI_volume_CT_mesh_sc128_lol2/KISTI_Rendering/%s/%s/rendering/views.txt'
+__C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume_CT_mesh_sc128_lol2/KISTI_Vox/%s/%s/model.binvox'
+# __C.DATASETS.SHAPENET.VOXEL_PATH            = './datasets/KISTI_volume_CT_mesh_sc128_wrong_voxel/KISTI_Vox_wrong_v_0_25/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.VOXEL_MESH_PATH            = './datasets/KISTI_volume_CT_mesh_sc128_lol2/KISTI_Vox_BD/%s/%s/model.binvox'
 
 __C.DATASETS.PASCAL3D                       = edict()
 __C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'
@@ -116,7 +117,7 @@ __C.TRAIN.MERGER_LR_MILESTONES              = [150]
 __C.TRAIN.BETAS                             = (.9, .999)
 __C.TRAIN.MOMENTUM                          = .9
 __C.TRAIN.GAMMA                             = .5
-__C.TRAIN.SAVE_FREQ                         = 40            # weights will be overwritten every save_freq epoch
+__C.TRAIN.SAVE_FREQ                         = 25            # weights will be overwritten every save_freq epoch
 __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
 
 #
@@ -124,4 +125,10 @@ __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
 #
 __C.TEST                                    = edict()
 __C.TEST.RANDOM_BG_COLOR_RANGE              = [[240, 240], [240, 240], [240, 240]]
-__C.TEST.VOXEL_THRESH                       = [.2, .3, .4, .5]
+# __C.TEST.VOXEL_THRESH                       = [.34, .36, .39, .44, .52]
+# __C.TEST.VOXEL_THRESH                       = [.45, .475, .5, .525, .55]
+# __C.TEST.VOXEL_THRESH                       = [.4, .425, .45, .475, .5]
+# __C.TEST.VOXEL_THRESH                       = [.47, .50, .53, .58, .63]
+# __C.TEST.VOXEL_THRESH                       = [.3, .31, .32, .34, .39]
+# __C.TEST.VOXEL_THRESH                       = [.36, .39, .42, .47, .53]
+__C.TEST.VOXEL_THRESH                       = [.35, .375, .4, .425, .45]

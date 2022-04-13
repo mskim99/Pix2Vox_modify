@@ -73,8 +73,8 @@ def test_net(cfg,
         generator.load_state_dict(checkpoint['generator_state_dict'])
 
     if volume_scaler is None or image_scaler is None:
-        volume_scaler = joblib.load('/home/jzw/work/pix2vox/output/logs/checkpoints/volume_scaler.pkl')
-        image_scaler = joblib.load('/home/jzw/work/pix2vox/output/logs/checkpoints/image_scaler.pkl')
+        volume_scaler = joblib.load('./output/logs/checkpoints/volume_scaler.pkl')
+        image_scaler = joblib.load('./output/logs/checkpoints/image_scaler.pkl')
 
     # Set up loss functions
     bce_loss = torch.nn.BCEWithLogitsLoss()
@@ -88,6 +88,7 @@ def test_net(cfg,
     n_samples = len(test_data_loader)
     test_iou = dict()
     L1_losses = utils.network_utils_GAN.AverageMeter()
+    L1_losses_thres = utils.network_utils_GAN.AverageMeter()
     dice_losses = utils.network_utils_GAN.AverageMeter()
     SSIM_losses = utils.network_utils_GAN.AverageMeter()
     iou_losses = utils.network_utils_GAN.AverageMeter()
@@ -112,6 +113,11 @@ def test_net(cfg,
                 ground_truth_volumes = ground_truth_volumes.float() / 255.
                 rendering_images = rendering_images / 255.
 
+            '''
+            rendering_images = image_scaler.transform(rendering_images.reshape(-1, rendering_images.shape[-1])).reshape(rendering_images.shape)
+            rendering_images = torch.from_numpy(rendering_images).type(torch.FloatTensor)
+            ground_truth_volumes = ground_truth_volumes.float() / 255.
+            '''
             # Get data from data loader
             rendering_images = utils.network_utils.var_or_cuda(rendering_images)
             ground_truth_volumes = utils.network_utils.var_or_cuda(ground_truth_volumes)
@@ -126,8 +132,14 @@ def test_net(cfg,
             SSIM_loss = utils.loss_function.ssim_loss_volume(gen_volumes, ground_truth_volumes)
             SSIM_loss = 0.5 - SSIM_loss
 
+            # gen_volumes_thres_pos = torch.ge(gen_volumes, 0.39)
+            gt_volumes_thres_pos = torch.ge(ground_truth_volumes, 0.39)
+            # gen_volumes_thres = gen_volumes * gen_volumes_thres_pos
+            gt_volumes_thres = ground_truth_volumes * gt_volumes_thres_pos
+            L1_loss_thres = l1_loss(gen_volumes, gt_volumes_thres)
+
             sample_iou = []
-            for th in [.3, .4, .5]:
+            for th in [.2, .3, .4, .5]:
                 _volume = torch.ge(gen_volumes, th).float()
                 _gt_volume = torch.ge(ground_truth_volumes, th).float()
                 intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
@@ -137,8 +149,11 @@ def test_net(cfg,
             iou_loss = sum(sample_iou) / len(sample_iou)
             iou_loss = 0.5 - iou_loss
 
+            sample_iou.clear()
+
             # Append loss to average metrics
             L1_losses.update(L1_loss.item())
+            L1_losses_thres.update(L1_loss_thres.item())
             dice_losses.update(dice_loss.item())
             SSIM_losses.update(SSIM_loss.item())
             iou_losses.update(iou_loss)
@@ -146,39 +161,79 @@ def test_net(cfg,
             # Volume Visualization
             '''
             gv = gen_volumes.cpu().numpy()
-            np.save('./output/voxel/gv/gv_' + str(sample_idx).zfill(6) + '.npy', gv)
+            np.save('./output/voxel2/gv/gv_' + str(sample_idx).zfill(6) + '.npy', gv)
+
             gtv = ground_truth_volumes.cpu().numpy()
-            np.save('./output/voxel/gtv/gtv_' + str(sample_idx).zfill(6) + '.npy', gtv)
+            np.save('./output/voxel2/gtv/gtv_' + str(sample_idx).zfill(6) + '.npy', gtv)
             '''
 
             # IoU per sample
             sample_iou = []
+            sample_accuracy = []
+            sample_precision = []
+            sample_recall = []
+            sample_f1_score = []
             for th in cfg.TEST.VOXEL_THRESH:
                 _volume = torch.ge(gen_volumes, th).float()
                 _gt_volume = torch.ge(ground_truth_volumes, th).float()
+
+                volume_num = torch.sum(_volume).float()
+                gt_volume_num = torch.sum(_gt_volume).float()
+                total_voxels = float(128 * 128 * 128)
+
                 intersection = torch.sum(torch.ge(_volume.mul(_gt_volume), 1)).float()
                 union = torch.sum(torch.ge(_volume.add(_gt_volume), 1)).float()
-                sample_iou.append((intersection / union).item())
+
+                iou = intersection / union
+
+                TP = intersection / total_voxels
+                TN = 1.0 - (union / total_voxels)
+                FP = (volume_num - intersection) / total_voxels
+                FN = (gt_volume_num - intersection) / total_voxels
+
+                # print(str(TP) + ' ' + str(FP) + ' ' + str(TN) + ' ' + str(FN))
+
+                precision = TP / (TP + FP)
+                recall = TP / (TP + FN)
+
+                sample_iou.append(iou.item())
+                sample_accuracy.append(((TP + TN) / (TP + TN + FP + FN)).item())
+                sample_precision.append(precision.item())
+                sample_recall.append(recall.item())
+                sample_f1_score.append(((2. * precision * recall) / (precision + recall)).item())
 
             # IoU per taxonomy
             if taxonomy_id not in test_iou:
-                test_iou[taxonomy_id] = {'n_samples': 0, 'iou': []}
+                test_iou[taxonomy_id] = {'n_samples': 0, 'iou': [], 'accuracy' : [], 'precision' : [], 'recall' : [], 'f1-score' : []}
             test_iou[taxonomy_id]['n_samples'] += 1
             test_iou[taxonomy_id]['iou'].append(sample_iou)
+            test_iou[taxonomy_id]['accuracy'].append(sample_accuracy)
+            test_iou[taxonomy_id]['precision'].append(sample_precision)
+            test_iou[taxonomy_id]['recall'].append(sample_recall)
+            test_iou[taxonomy_id]['f1-score'].append(sample_f1_score)
 
-            print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f'
-                  % (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, iou_loss, SSIM_loss.item(), L1_loss.item()))
 
-    print('[INFO] %s Test[%d] Loss Mean / IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f'
-          % (dt.now(), n_samples, iou_losses.avg, SSIM_losses.avg, L1_losses.avg))
+            print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f L1Loss_thres = %.6f'
+                  % (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, iou_loss, SSIM_loss.item(), L1_loss.item(), L1_loss_thres.item()))
+
+    print('[INFO] %s Test[%d] Loss Mean / IoULoss = %.6f SSIMLoss = %.6f L1Loss = %.6f L1Loss_thres = %.6f'
+          % (dt.now(), n_samples, iou_losses.avg, SSIM_losses.avg, L1_losses.avg, L1_losses_thres.avg))
+
+    # print(test_iou[taxonomy_id]['recall'])
 
     # Output testing results
     mean_iou = []
     for taxonomy_id in test_iou:
         test_iou[taxonomy_id]['iou'] = np.mean(test_iou[taxonomy_id]['iou'], axis=0)
+        test_iou[taxonomy_id]['accuracy'] = np.mean(test_iou[taxonomy_id]['accuracy'], axis=0)
+        test_iou[taxonomy_id]['precision'] = np.mean(test_iou[taxonomy_id]['precision'], axis=0)
+        test_iou[taxonomy_id]['recall'] = np.mean(test_iou[taxonomy_id]['recall'], axis=0)
+        test_iou[taxonomy_id]['f1-score'] = np.mean(test_iou[taxonomy_id]['f1-score'], axis=0)
         mean_iou.append(test_iou[taxonomy_id]['iou'] * test_iou[taxonomy_id]['n_samples'])
     mean_iou = np.sum(mean_iou, axis=0) / n_samples
 
+
+    eval_factors = ['iou', 'accuracy', 'precision', 'recall', 'f1-score']
     # Print header
     print('============================ TEST RESULTS ============================')
     print('Taxonomy', end='\t')
@@ -189,16 +244,17 @@ def test_net(cfg,
     print()
     # Print body
     for taxonomy_id in test_iou:
-        print('%s' % taxonomies[taxonomy_id]['taxonomy_name'].ljust(8), end='\t')
-        print('%d' % test_iou[taxonomy_id]['n_samples'], end='\t')
-        if 'baseline' in taxonomies[taxonomy_id]:
-            print('%.4f' % taxonomies[taxonomy_id]['baseline']['%d-view' % cfg.CONST.N_VIEWS_RENDERING], end='\t\t')
-        else:
-            print('N/a', end='\t\t')
+        for eval_factor in eval_factors:
+            print('%s' % eval_factor.ljust(8), end='\t')
+            print('%d' % test_iou[taxonomy_id]['n_samples'], end='\t')
+            if 'baseline' in taxonomies[taxonomy_id]:
+                print('%.4f' % taxonomies[taxonomy_id]['baseline']['%d-view' % cfg.CONST.N_VIEWS_RENDERING], end='\t\t')
+            else:
+                print('N/a', end='\t\t')
 
-        for ti in test_iou[taxonomy_id]['iou']:
-            print('%.4f' % ti, end='\t')
-        print('\n')
+            for ti in test_iou[taxonomy_id][eval_factor]:
+                print('%.4f' % ti, end='\t')
+            print('')
 
     # Add testing results to TensorBoard
     max_iou = np.max(mean_iou)

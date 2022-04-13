@@ -1,5 +1,6 @@
 from vtk.util import numpy_support
 import vtk
+import binvox_rw
 import numpy as np
 import cv2
 import os
@@ -32,8 +33,8 @@ for j in range (50, 150, 50):
     print(str(j) + ' index ended')
     '''
 
-for i in range (0, 400):
-    x_save_load = np.load('J:/Program/Pix2Vox-master/voxel_log/211219_1_loss_GAN_train_epoch_0_400_G_1_D_linear_increase_10_r_img_3_L1_4_SSIM_2_IoU_0_3-0_5_drp_g_e_0_375_lr_5e-5_norm_res_128/gv/gv_' + str(i).zfill(6) + '.npy')
+for i in range (0, 18):
+    x_save_load = np.load('J:/Program/Pix2Vox-master/voxel_log/220407_4_loss_pix2vox_master_test_epoch_250_E_D_iou_6_0_weight_0_2_lr_1e-5_ct_vol_lol2_res_128/gv/gv_' + str(i).zfill(6) + '.npy')
 
     imdata = vtk.vtkImageData()
 
@@ -45,10 +46,34 @@ for i in range (0, 400):
     imdata.SetOrigin([0, 0, 0])
     imdata.GetPointData().SetScalars(depthArray)
 
-    if not os.path.isdir('J:/Program/Pix2Vox-master/voxel_log/211219_1_loss_GAN_train_epoch_0_400_G_1_D_linear_increase_10_r_img_3_L1_4_SSIM_2_IoU_0_3-0_5_drp_g_e_0_375_lr_5e-5_norm_res_128_mha'):
-        os.mkdir('J:/Program/Pix2Vox-master/voxel_log/211219_1_loss_GAN_train_epoch_0_400_G_1_D_linear_increase_10_r_img_3_L1_4_SSIM_2_IoU_0_3-0_5_drp_g_e_0_375_lr_5e-5_norm_res_128_mha')
+    if not os.path.isdir('J:/Program/Pix2Vox-master/voxel_log/220407_4_loss_pix2vox_master_test_epoch_250_E_D_iou_6_0_weight_0_2_lr_1e-5_ct_vol_lol2_res_128_mha'):
+        os.mkdir('J:/Program/Pix2Vox-master/voxel_log/220407_4_loss_pix2vox_master_test_epoch_250_E_D_iou_6_0_weight_0_2_lr_1e-5_ct_vol_lol2_res_128_mha')
+    else:
+        print("OS not problem")
 
     writer = vtk.vtkMetaImageWriter()
-    writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/211219_1_loss_GAN_train_epoch_0_400_G_1_D_linear_increase_10_r_img_3_L1_4_SSIM_2_IoU_0_3-0_5_drp_g_e_0_375_lr_5e-5_norm_res_128_mha/gv_' + str(i).zfill(6) + '.mha')
+    writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/220407_4_loss_pix2vox_master_test_epoch_250_E_D_iou_6_0_weight_0_2_lr_1e-5_ct_vol_lol2_res_128_mha/gv_' + str(i).zfill(6) + '.mha')
     writer.SetInputData(imdata)
     writer.Write()
+
+'''
+with open('J:/Program/Pix2Vox-master/voxel_log/voxel_process/gv_value_0_2_res_128.binvox', 'rb') as f:
+    model = binvox_rw.read_as_3d_array(f)
+
+data = model.data
+
+imdata = vtk.vtkImageData()
+
+depthArray = numpy_support.numpy_to_vtk(data.ravel(order='F'), deep=True, array_type=vtk.VTK_FLOAT)
+
+imdata.SetDimensions([128, 128, 128])
+# fill the vtk image data object
+imdata.SetSpacing([1, 1, 1])
+imdata.SetOrigin([0, 0, 0])
+imdata.GetPointData().SetScalars(model)
+
+writer = vtk.vtkMetaImageWriter()
+writer.SetFileName('J:/Program/Pix2Vox-master/voxel_log/voxel_process/gv_value_0_2_res_128.mha')
+writer.SetInputData(imdata)
+writer.Write()
+'''
